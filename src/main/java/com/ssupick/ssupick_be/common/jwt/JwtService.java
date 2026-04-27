@@ -81,6 +81,14 @@ public class JwtService {
         }
     }
 
+    // Authorization 헤더에서 Bearer 토큰 추출
+    public String resolveToken(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new GeneralException(ErrorStatus.JWT_TOKEN_NOT_FOUND);
+        }
+        return authorizationHeader.substring(7);
+    }
+
     // Access Token 검증
     public void validateAccessToken(String accessToken) {
         if (accessToken == null || accessToken.isBlank()) {

@@ -12,6 +12,11 @@ public enum SuccessStatus implements BaseStatus {
     COMMON_SUCCESS_STATUS(HttpStatus.OK, "COM_200", "성공적으로 처리되었습니다."),
 
     /**
+     * Auth
+     */
+    REISSUE_SUCCESS(HttpStatus.OK, "AUTH_200_2", "토큰 재발급에 성공했습니다."),
+
+    /**
      * OAuth
      */
     OAUTH_KAKAO_LOGIN_SUCCESS(HttpStatus.OK, "OAUTH_200_1", "카카오 로그인에 성공했습니다.");

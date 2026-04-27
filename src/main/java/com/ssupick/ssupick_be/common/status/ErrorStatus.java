@@ -44,7 +44,12 @@ public enum ErrorStatus implements BaseStatus {
      */
     KAKAO_TOKEN_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "KAKAO_502_1", "카카오 토큰 발급에 실패했습니다."),
     KAKAO_USER_INFO_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "KAKAO_502_2", "카카오 사용자 정보 조회에 실패했습니다."),
-    KAKAO_UNLINK_FAILED(HttpStatus.BAD_GATEWAY, "KAKAO_502_3", "카카오 연동 해제에 실패했습니다.");
+    KAKAO_UNLINK_FAILED(HttpStatus.BAD_GATEWAY, "KAKAO_502_3", "카카오 연동 해제에 실패했습니다."),
+
+    /**
+     * User
+     */
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "사용자를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

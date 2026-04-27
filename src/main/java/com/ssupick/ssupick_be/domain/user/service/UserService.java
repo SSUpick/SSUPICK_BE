@@ -1,5 +1,7 @@
 package com.ssupick.ssupick_be.domain.user.service;
 
+import com.ssupick.ssupick_be.common.exception.GeneralException;
+import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
@@ -28,6 +30,20 @@ public class UserService {
                 .orElseGet(() ->
                         userRepository.save(User.createKakaoUser(kakaoId, email, name, profileUrl, deviceType))
                 );
+    }
+
+    // userId로 유저 조회, 없으면 예외
+    @Transactional(readOnly = true)
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+    }
+
+    // 엔티티 변경이 필요한 경우 사용 (dirty checking 보장)
+    @Transactional
+    public User findByIdForUpdate(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
     }
 
 }
