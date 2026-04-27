@@ -99,6 +99,11 @@ public class User extends BaseEntity {
         this.deleted = false;
     }
 
+    // 로그아웃 처리 — 리프레시 토큰 무효화
+    public void logout() {
+        this.refreshToken = null;
+    }
+
     // 회원 탈퇴 처리
     public void withdraw() {
         this.deleted = true;

@@ -64,6 +64,13 @@ public class AuthService {
         return new ReissueResponse(tokens.accessToken(), tokens.refreshToken());
     }
 
+    // 유저 조회 후 리프레시 토큰 무효화
+    @Transactional
+    public void logout(Long userId) {
+        User user = userService.findByIdForUpdate(userId);
+        user.logout();
+    }
+
     // 유저 조회 후 soft delete 및 리프레시 토큰 무효화
     @Transactional
     public void withdraw(Long userId) {
