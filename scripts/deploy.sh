@@ -59,7 +59,6 @@ docker run -d \
   --network ssupick-net \
   -p ${NEW_PORT}:8080 \
   --env-file ${ENV_FILE} \
-  -v ${FIREBASE_JSON}:/home/ubuntu/app/firebase-service-account.json:ro \
   --memory="600m" \
   --restart unless-stopped \
   $IMAGE
