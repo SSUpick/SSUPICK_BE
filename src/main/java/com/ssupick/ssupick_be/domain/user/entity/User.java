@@ -8,6 +8,7 @@ import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+@Table(name = "user")
 @Getter
 @Entity
 @Builder

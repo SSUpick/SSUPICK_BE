@@ -107,7 +107,12 @@ public class JwtService {
 
     // Refresh Token DB 저장 해시값과 비교 — 2차 검증용 (서명 검증은 1차에서 완료)
     public void validateRefreshToken(String refreshToken, String storedHashedToken) {
-        if (!hashToken(refreshToken).equals(storedHashedToken))
+        byte[] presented = hashToken(refreshToken).getBytes(StandardCharsets.UTF_8);
+        byte[] stored = (storedHashedToken == null)
+                ? new byte[0]
+                : storedHashedToken.getBytes(StandardCharsets.UTF_8);
+
+        if (!MessageDigest.isEqual(presented, stored))
             throw new GeneralException(ErrorStatus.REFRESH_TOKEN_MISMATCH);
     }
 
