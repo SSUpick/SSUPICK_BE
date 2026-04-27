@@ -1,0 +1,67 @@
+name: CD
+
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: JDK 17 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: application-prod.yml 생성
+        run: |
+          mkdir -p src/main/resources
+          cat > src/main/resources/application-prod.yml << 'EOF'
+          ${{ secrets.APPLICATION_PROD_YML }}
+          EOF
+
+      - name: Gradle 권한 부여
+        run: chmod +x gradlew
+
+      - name: Gradle 빌드 (테스트 제외)
+        run: ./gradlew clean build -x test
+
+      - name: DockerHub 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker 이미지 빌드 및 푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ssupick-backend:latest
+
+      - name: 배포 파일 zip 압축
+        run: |
+          zip -r deploy.zip appspec.yml scripts/
+
+      - name: S3 업로드
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: S3에 업로드
+        run: |
+          aws s3 cp deploy.zip s3://${{ secrets.S3_BUCKET }}/deploy.zip
+
+      - name: CodeDeploy 배포 트리거
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ secrets.CODEDEPLOY_APP }} \
+            --deployment-group-name ${{ secrets.CODEDEPLOY_GROUP }} \
+            --s3-location bucket=${{ secrets.S3_BUCKET }},key=deploy.zip,bundleType=zip
