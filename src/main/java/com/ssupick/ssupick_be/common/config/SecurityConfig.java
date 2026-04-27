@@ -48,6 +48,13 @@ public class SecurityConfig {
             "/api/auth/token/reissue"
     };
 
+    /**
+     * 헬스 체크 관련 경로
+     */
+    private static final String[] HEALTH_URIS = {
+            "/actuator/health"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -62,6 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(SWAGGER_URIS).permitAll()
                         .requestMatchers(OAUTH_URIS).permitAll()
                         .requestMatchers(AUTH_URIS).permitAll()
+                        .requestMatchers(HEALTH_URIS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -72,10 +80,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedOrigins(List.of("http://localhost:3000","http://localhost:8080","https://ssu-pick.shop"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
