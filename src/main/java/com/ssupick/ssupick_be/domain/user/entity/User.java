@@ -56,4 +56,9 @@ public class User extends BaseEntity {
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
 
+    // 리프레시 토큰 업데이트
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
 }
