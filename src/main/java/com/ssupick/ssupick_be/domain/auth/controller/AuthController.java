@@ -10,6 +10,7 @@ import com.ssupick.ssupick_be.domain.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -36,5 +37,14 @@ public class AuthController implements AuthControllerDocs {
     ) {
         ReissueResponse response = authService.reissue(refreshToken);
         return ApiResponse.success(SuccessStatus.REISSUE_SUCCESS, response);
+    }
+
+    @DeleteMapping("/withdraw")
+    @Override
+    public ResponseEntity<ApiResponse<Void>> withdraw(
+            @AuthenticationPrincipal Long userId
+    ) {
+        authService.withdraw(userId);
+        return ApiResponse.success(SuccessStatus.WITHDRAW_SUCCESS);
     }
 }
