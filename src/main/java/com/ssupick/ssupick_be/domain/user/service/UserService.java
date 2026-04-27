@@ -46,4 +46,11 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
     }
 
+    // 테스트 유저 조회 후 없으면 신규 생성
+    @Transactional
+    public User findOrCreateTestUser(String testUserId, DeviceType deviceType) {
+        return userRepository.findByOauthIdAndOauthProvider(testUserId, OAuthProvider.TEST)
+                .orElseGet(() -> userRepository.save(User.createTestUser(testUserId, deviceType)));
+    }
+
 }

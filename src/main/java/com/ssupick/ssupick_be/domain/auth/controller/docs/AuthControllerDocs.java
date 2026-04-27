@@ -1,18 +1,50 @@
 package com.ssupick.ssupick_be.domain.auth.controller.docs;
 
 import com.ssupick.ssupick_be.common.response.ApiResponse;
-import com.ssupick.ssupick_be.domain.auth.dto.ReissueResponse;
+import com.ssupick.ssupick_be.domain.auth.dto.request.LoginRequest;
+import com.ssupick.ssupick_be.domain.auth.dto.response.LoginResponse;
+import com.ssupick.ssupick_be.domain.auth.dto.response.ReissueResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 public interface AuthControllerDocs {
+
+    @Operation(
+            summary = "테스트 로그인",
+            description = "testUserId로 유저를 조회하거나 없으면 자동 생성 후 JWT를 발급합니다. secretKey로 접근을 제한합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "로그인 성공",
+                    content = @Content(schema = @Schema(implementation = LoginResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (testUserId, deviceType, secretKey 누락)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "시크릿 키 불일치",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    ResponseEntity<ApiResponse<LoginResponse>> login(
+            @Parameter(description = "테스트 시크릿 키", required = true)
+            @RequestHeader("Test-Secret-Key") String secretKey,
+            @Valid @RequestBody LoginRequest request
+    );
+
     @Operation(
             summary = "토큰 재발급",
             description = "Authorization 헤더에 'Bearer {refreshToken}' 형식으로 전달하면 액세스 토큰과 리프레시 토큰을 재발급합니다."
@@ -33,4 +65,5 @@ public interface AuthControllerDocs {
             @Parameter(description = "리프레시 토큰", required = true)
             @RequestHeader("Refresh-Token") String refreshToken
     );
+
 }
