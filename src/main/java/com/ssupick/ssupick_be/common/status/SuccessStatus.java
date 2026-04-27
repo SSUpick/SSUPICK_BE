@@ -1,12 +1,13 @@
 package com.ssupick.ssupick_be.common.status;
 
+import com.ssupick.ssupick_be.common.base.BaseStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum SuccessStatus {
+public enum SuccessStatus implements BaseStatus {
 
     COMMON_SUCCESS_STATUS(HttpStatus.OK, "COM_200", "성공적으로 처리되었습니다.");
 

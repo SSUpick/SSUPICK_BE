@@ -1,12 +1,13 @@
 package com.ssupick.ssupick_be.common.status;
 
+import com.ssupick.ssupick_be.common.base.BaseStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum ErrorStatus {
+public enum ErrorStatus implements BaseStatus {
 
     /**
      * Common

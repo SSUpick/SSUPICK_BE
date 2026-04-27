@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonPropertyOrder({"isSuccess", "code", "message", "data"})
-public class ApiResponse {
+public class ApiResponse<T> {
 
     @JsonProperty("isSuccess")
     private Boolean isSuccess;

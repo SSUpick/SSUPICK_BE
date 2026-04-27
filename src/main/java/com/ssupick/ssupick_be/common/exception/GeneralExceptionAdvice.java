@@ -1,8 +1,8 @@
 package com.ssupick.ssupick_be.common.exception;
 
 import com.ssupick.ssupick_be.common.base.BaseStatus;
-import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
+import com.ssupick.ssupick_be.common.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
