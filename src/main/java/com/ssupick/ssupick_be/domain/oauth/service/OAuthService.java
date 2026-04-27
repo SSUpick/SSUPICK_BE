@@ -28,12 +28,11 @@ public class OAuthService {
         KakaoTokenResponse kakaoToken = oAuthKakaoClient.getKakaoToken(request.code());
         KakaoUserInfoResponse userInfo = oAuthKakaoClient.getKakaoUserInfo(kakaoToken.accessToken());
 
-        // DTO 파싱은 oauth 레이어에서 처리 후 순수 값만 UserService로 전달
-        KakaoUserInfoResponse.KakaoAccount account = userInfo.kakaoAccount();
+        // DTO 파싱은 KakaoUserInfoResponse 내부에서 처리
         String kakaoId = userInfo.id().toString();
-        String email = (account != null && account.email() != null) ? account.email() : null;
-        String name = (account != null && account.profile() != null) ? account.profile().nickname() : null;
-        String profileUrl = (account != null && account.profile() != null) ? account.profile().profileImageUrl() : null;
+        String email = userInfo.extractEmail();
+        String name = userInfo.extractNickname();
+        String profileUrl = userInfo.extractProfileImageUrl();
 
         User user = userService.findOrRegisterKakaoUser(kakaoId, email, name, profileUrl, request.deviceType());
 

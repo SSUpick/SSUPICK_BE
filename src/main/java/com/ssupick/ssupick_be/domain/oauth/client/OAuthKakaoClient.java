@@ -45,7 +45,7 @@ public class OAuthKakaoClient {
                     .onStatus(
                             HttpStatusCode::isError,
                             r -> r.bodyToMono(String.class)
-                                    .flatMap(body -> handleError(r.statusCode(), body, "토큰 발급"))
+                                    .flatMap(body -> handleError(r.statusCode(), body, ErrorStatus.KAKAO_TOKEN_REQUEST_FAILED))
                     )
                     .bodyToMono(KakaoTokenResponse.class)
                     .block();
@@ -70,7 +70,7 @@ public class OAuthKakaoClient {
                     .onStatus(
                             HttpStatusCode::isError,
                             r -> r.bodyToMono(String.class)
-                                    .flatMap(body -> handleError(r.statusCode(), body, "사용자 정보 조회"))
+                                    .flatMap(body -> handleError(r.statusCode(), body, ErrorStatus.KAKAO_USER_INFO_REQUEST_FAILED))
                     )
                     .bodyToMono(KakaoUserInfoResponse.class)
                     .block();
@@ -97,7 +97,7 @@ public class OAuthKakaoClient {
                     .onStatus(
                             HttpStatusCode::isError,
                             r -> r.bodyToMono(String.class)
-                                    .flatMap(body -> handleError(r.statusCode(), body, "연동 해제"))
+                                    .flatMap(body -> handleError(r.statusCode(), body, ErrorStatus.KAKAO_UNLINK_FAILED))
                     )
                     .bodyToMono(Void.class)
                     .block();
@@ -107,9 +107,9 @@ public class OAuthKakaoClient {
         }
     }
 
-    private Mono<Throwable> handleError(HttpStatusCode statusCode, String body, String action) {
-        log.error("[*] 카카오 {} 실패 status={}, body={}", action, statusCode, body);
-        return Mono.error(new GeneralException(ErrorStatus.KAKAO_TOKEN_REQUEST_FAILED));
+    private Mono<Throwable> handleError(HttpStatusCode statusCode, String body, ErrorStatus errorStatus) {
+        log.error("[*] 카카오 API 실패 status={}, body={}", statusCode, body);
+        return Mono.error(new GeneralException(errorStatus));
     }
 
 }

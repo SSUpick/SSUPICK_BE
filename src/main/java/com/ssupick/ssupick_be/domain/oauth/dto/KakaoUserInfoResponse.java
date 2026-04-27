@@ -9,6 +9,21 @@ public record KakaoUserInfoResponse(
         @JsonProperty("kakao_account")
         KakaoAccount kakaoAccount
 ) {
+
+    public String extractEmail() {
+        return kakaoAccount != null ? kakaoAccount.email() : null;
+    }
+
+    public String extractNickname() {
+        return kakaoAccount != null && kakaoAccount.profile() != null
+                ? kakaoAccount.profile().nickname() : null;
+    }
+
+    public String extractProfileImageUrl() {
+        return kakaoAccount != null && kakaoAccount.profile() != null
+                ? kakaoAccount.profile().profileImageUrl() : null;
+    }
+
     public record KakaoAccount(
 
             String email,
