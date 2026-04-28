@@ -23,6 +23,7 @@ public enum SuccessStatus implements BaseStatus {
      * User
      */
     GET_USER_PROFILE_SUCCESS(HttpStatus.OK, "USER_200_1", "프로필 조회에 성공했습니다."),
+    COMPLETE_ONBOARDING_SUCCESS(HttpStatus.OK, "USER_200_2", "온보딩 등록에 성공했습니다."),
 
 
     /**

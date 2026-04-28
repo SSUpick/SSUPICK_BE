@@ -1,6 +1,7 @@
 package com.ssupick.ssupick_be.domain.user.dto.response;
 
 import com.ssupick.ssupick_be.domain.user.entity.User;
+import com.ssupick.ssupick_be.domain.user.enums.AppearanceStyle;
 import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,8 +31,20 @@ public class UserProfileResponse {
     @Schema(description = "나이", example = "25")
     private Integer age;
 
-    @Schema(description = "온보딩 상태", example = "COMPLETE")
+    @Schema(description = "온보딩 상태", example = "COMPLETED")
     private OnboardingStatus onboardingStatus;
+
+    @Schema(description = "닉네임", example = "숭실대 카리나")
+    private String nickname;
+
+    @Schema(description = "MBTI", example = "ISTJ")
+    private String mbti;
+
+    @Schema(description = "외적 스타일", example = "CHIC")
+    private AppearanceStyle appearanceStyle;
+
+    @Schema(description = "연락처", example = "@ssu_pick")
+    private String contact;
 
     public static UserProfileResponse from(User user) {
         return UserProfileResponse.builder()
@@ -42,6 +55,10 @@ public class UserProfileResponse {
                 .gender(user.getGender())
                 .age(user.getAge())
                 .onboardingStatus(user.getOnboardingStatus())
+                .nickname(user.getNickname())
+                .mbti(user.getMbti())
+                .appearanceStyle(user.getAppearanceStyle())
+                .contact(user.getContact())
                 .build();
     }
 }

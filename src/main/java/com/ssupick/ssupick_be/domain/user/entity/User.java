@@ -1,6 +1,7 @@
 package com.ssupick.ssupick_be.domain.user.entity;
 
 import com.ssupick.ssupick_be.common.base.BaseEntity;
+import com.ssupick.ssupick_be.domain.user.enums.AppearanceStyle;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
@@ -54,6 +55,19 @@ public class User extends BaseEntity {
     @Column(name = "age")
     private Integer age;
 
+    @Column(name = "nickname", length = 20)
+    private String nickname;
+
+    @Column(name = "mbti", length = 4)
+    private String mbti;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "appearance_style", length = 20)
+    private AppearanceStyle appearanceStyle;
+
+    @Column(name = "contact", length = 100)
+    private String contact;
+
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
 
@@ -98,6 +112,15 @@ public class User extends BaseEntity {
         this.deviceType = deviceType;
         this.onboardingStatus = OnboardingStatus.INCOMPLETE;
         this.deleted = false;
+    }
+
+    // 온보딩 프로필 등록
+    public void completeOnboarding(String nickname, String mbti, AppearanceStyle appearanceStyle, String contact) {
+        this.nickname = nickname;
+        this.mbti = mbti;
+        this.appearanceStyle = appearanceStyle;
+        this.contact = contact;
+        this.onboardingStatus = OnboardingStatus.COMPLETED;
     }
 
     // 로그아웃 처리 — 리프레시 토큰 무효화
