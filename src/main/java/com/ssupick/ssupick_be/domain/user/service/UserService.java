@@ -2,6 +2,7 @@ package com.ssupick.ssupick_be.domain.user.service;
 
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
+import com.ssupick.ssupick_be.domain.user.dto.response.UserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
@@ -32,11 +33,12 @@ public class UserService {
                 );
     }
 
-    // userId로 유저 조회, 없으면 예외
+    // userId로 유저 프로필 조회 — Controller에 Entity 노출 방지
     @Transactional(readOnly = true)
-    public User findById(Long userId) {
-        return userRepository.findById(userId)
+    public UserProfileResponse getUserProfile(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+        return UserProfileResponse.from(user);
     }
 
     // 엔티티 변경이 필요한 경우 사용 (dirty checking 보장)

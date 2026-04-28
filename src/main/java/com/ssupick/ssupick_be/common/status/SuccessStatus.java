@@ -20,6 +20,12 @@ public enum SuccessStatus implements BaseStatus {
     LOGOUT_SUCCESS(HttpStatus.OK, "AUTH_200_4", "로그아웃이 완료되었습니다."),
 
     /**
+     * User
+     */
+    GET_USER_PROFILE_SUCCESS(HttpStatus.OK, "USER_200_1", "프로필 조회에 성공했습니다."),
+
+
+    /**
      * OAuth
      */
     OAUTH_KAKAO_LOGIN_SUCCESS(HttpStatus.OK, "OAUTH_200_1", "카카오 로그인에 성공했습니다.");
