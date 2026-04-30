@@ -46,6 +46,9 @@ public class UserProfileResponse {
     @Schema(description = "연락처", example = "@ssu_pick")
     private String contact;
 
+    @Schema(description = "어필 문구", example = "축제 같이 놀아요!")
+    private String appealMessage;
+
     public static UserProfileResponse from(User user) {
         return UserProfileResponse.builder()
                 .userId(user.getId())
@@ -59,6 +62,7 @@ public class UserProfileResponse {
                 .mbti(user.getMbti())
                 .appearanceStyle(user.getAppearanceStyle())
                 .contact(user.getContact())
+                .appealMessage(user.getAppealMessage())
                 .build();
     }
 }

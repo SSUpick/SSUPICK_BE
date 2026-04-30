@@ -27,5 +27,10 @@ public record UserOnboardingRequest(
         @Schema(description = "연락처 (인스타그램, 전화번호 등)", example = "@ssu_pick")
         @NotBlank(message = "연락처는 필수입니다.")
         @Size(max = 100, message = "연락처는 100자 이하로 입력해주세요.")
-        String contact
+        String contact,
+
+        @Schema(description = "어필 문구", example = "축제 같이 놀아요!")
+        @NotBlank(message = "어필 문구는 필수입니다.")
+        @Size(max = 100, message = "어필 문구는 100자 이하로 입력해주세요.")
+        String appealMessage
 ) {}

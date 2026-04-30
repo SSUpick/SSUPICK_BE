@@ -68,6 +68,9 @@ public class User extends BaseEntity {
     @Column(name = "contact", length = 100)
     private String contact;
 
+    @Column(name = "appeal_message", length = 100)
+    private String appealMessage;
+
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
 
@@ -115,11 +118,12 @@ public class User extends BaseEntity {
     }
 
     // 온보딩 프로필 등록
-    public void completeOnboarding(String nickname, String mbti, AppearanceStyle appearanceStyle, String contact) {
+    public void completeOnboarding(String nickname, String mbti, AppearanceStyle appearanceStyle, String contact, String appealMessage) {
         this.nickname = nickname;
         this.mbti = mbti;
         this.appearanceStyle = appearanceStyle;
         this.contact = contact;
+        this.appealMessage = appealMessage;
         this.onboardingStatus = OnboardingStatus.COMPLETED;
     }
 

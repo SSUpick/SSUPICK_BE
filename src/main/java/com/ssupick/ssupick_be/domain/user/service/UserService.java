@@ -3,6 +3,7 @@ package com.ssupick.ssupick_be.domain.user.service;
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.user.dto.request.UserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.response.UserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.UserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
@@ -12,6 +13,8 @@ import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -60,12 +63,22 @@ public class UserService {
 
     // 온보딩 프로필 등록 — 중복 등록 방어
     @Transactional
-    public void registerOnboarding(Long userId, UserOnboardingRequest request) {
+    public void completeOnboarding(Long userId, UserOnboardingRequest request) {
         User user = getUserOrThrow(userId);
         if (user.getOnboardingStatus() == OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.ONBOARDING_ALREADY_COMPLETED);
         }
-        user.completeOnboarding(request.nickname(), request.mbti(), request.appearanceStyle(), request.contact());
+        user.completeOnboarding(request.nickname(), request.mbti(), request.appearanceStyle(), request.contact(), request.appealMessage());
+    }
+
+    // 유저 카드 리스트 조회 — 온보딩 완료 유저, 본인 제외
+    @Transactional(readOnly = true)
+    public List<UserCardResponse> getUserCardList(Long userId) {
+        return userRepository.findAllByOnboardingStatusAndDeletedFalseAndIdNot(
+                        OnboardingStatus.COMPLETED, userId)
+                .stream()
+                .map(UserCardResponse::from)
+                .toList();
     }
 
     // 엔티티 변경이 필요한 경우 사용 (dirty checking 보장)
