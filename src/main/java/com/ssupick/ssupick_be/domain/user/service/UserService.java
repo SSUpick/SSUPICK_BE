@@ -75,17 +75,17 @@ public class UserService {
     // 유저 프로필 조회 — Controller에 Entity 노출 방지
     @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(Long userId) {
-        return UserProfileResponse.from(getUserOrThrow(userId));
+        return UserProfileResponse.from(getActiveUserOrThrow(userId));
     }
 
     // 온보딩 프로필 등록 — 중복 등록 방어 + appeals 이중 방어
     @Transactional
     public void registerOnboarding(Long userId, UserOnboardingRequest request) {
-        User user = getUserOrThrow(userId);
+        User user = getActiveUserOrThrow(userId);
         if (user.getOnboardingStatus() == OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.ONBOARDING_ALREADY_COMPLETED);
         }
-        if (request.appeals().stream().anyMatch(a -> a == null || a.isBlank())) {
+        if (request.appeals() == null || request.appeals().stream().anyMatch(a -> a == null || a.isBlank())) {
             throw new GeneralException(ErrorStatus.INVALID_APPEAL_CONTENT);
         }
         user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals());
@@ -101,7 +101,8 @@ public class UserService {
                 .toList();
     }
 
-    // 엔티티 변경이 필요한 경우 사용 — AuthService에서 logout/withdraw/reissue 시 dirty checking 보장
+    // AuthService 전용 — logout/withdraw/reissue 시 사용
+    // 탈퇴 유저도 조회 가능해야 하므로 의도적으로 deletedFalse 미적용
     @Transactional
     public User findByIdForUpdate(Long userId) {
         return getUserOrThrow(userId);
