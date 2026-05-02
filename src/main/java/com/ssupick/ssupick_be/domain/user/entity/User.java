@@ -8,11 +8,14 @@ import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 @Table(name = "user")
 @Getter
 @Entity
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
@@ -54,16 +57,31 @@ public class User extends BaseEntity {
     @Column(name = "age")
     private Integer age;
 
+    @Column(name = "nickname", length = 20)
+    private String nickname;
+
+    @Column(name = "mbti", length = 4)
+    private String mbti;
+
+    @Column(name = "contact", length = 100)
+    private String contact;
+
+    @Column(name = "appeal1", length = 50)
+    private String appeal1;
+
+    @Column(name = "appeal2", length = 50)
+    private String appeal2;
+
+    @Column(name = "appeal3", length = 50)
+    private String appeal3;
+
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
 
     // 카카오 신규 유저 생성
     public static User createKakaoUser(
-            String oauthId,
-            String email,
-            String name,
-            String profileUrl,
-            DeviceType deviceType
+            String oauthId, String email, String name, String profileUrl, DeviceType deviceType
     ) {
         return User.builder()
                 .oauthId(oauthId)
@@ -100,6 +118,24 @@ public class User extends BaseEntity {
         this.deleted = false;
     }
 
+    // 온보딩 프로필 등록 — 어필 항목 최대 3개 (인덱스 초과분은 null)
+    public void completeOnboarding(String nickname, String mbti, String contact, List<String> appeals) {
+        this.nickname = nickname;
+        this.mbti = mbti;
+        this.contact = contact;
+        this.appeal1 = appeals.size() >= 1 ? appeals.get(0) : null;
+        this.appeal2 = appeals.size() >= 2 ? appeals.get(1) : null;
+        this.appeal3 = appeals.size() >= 3 ? appeals.get(2) : null;
+        this.onboardingStatus = OnboardingStatus.COMPLETED;
+    }
+
+    // appeal1~3을 List로 반환 — null 항목 제외
+    public List<String> getAppeals() {
+        return Stream.of(appeal1, appeal2, appeal3)
+                .filter(a -> a != null && !a.isBlank())
+                .toList();
+    }
+
     // 로그아웃 처리 — 리프레시 토큰 무효화
     public void logout() {
         this.refreshToken = null;
@@ -115,5 +151,4 @@ public class User extends BaseEntity {
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
-
 }

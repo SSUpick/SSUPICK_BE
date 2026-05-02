@@ -49,7 +49,10 @@ public enum ErrorStatus implements BaseStatus {
     /**
      * User
      */
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "사용자를 찾을 수 없습니다.");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "사용자를 찾을 수 없습니다."),
+    USER_ONBOARDING_INCOMPLETE(HttpStatus.FORBIDDEN, "USER_403_1", "온보딩을 완료하지 않은 유저입니다."),
+    ONBOARDING_ALREADY_COMPLETED(HttpStatus.CONFLICT, "USER_409_1", "이미 온보딩을 완료한 유저입니다."),
+    INVALID_APPEAL_CONTENT(HttpStatus.BAD_REQUEST, "USER_400_1", "어필 항목 내용이 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
