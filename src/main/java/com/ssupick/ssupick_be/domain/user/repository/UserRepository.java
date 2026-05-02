@@ -12,6 +12,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByOauthIdAndOauthProvider(String oauthId, OAuthProvider oauthProvider);
 
+    // 활성 유저 단건 조회 — 탈퇴 유저 제외
+    Optional<User> findByIdAndDeletedFalse(Long id);
+
     // 온보딩 완료 + 탈퇴하지 않은 유저 중 본인 제외 전체 조회
     List<User> findAllByOnboardingStatusAndDeletedFalseAndIdNot(OnboardingStatus onboardingStatus, Long excludeId);
 }
