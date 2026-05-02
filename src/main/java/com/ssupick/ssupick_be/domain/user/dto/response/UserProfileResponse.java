@@ -1,12 +1,13 @@
 package com.ssupick.ssupick_be.domain.user.dto.response;
 
 import com.ssupick.ssupick_be.domain.user.entity.User;
-import com.ssupick.ssupick_be.domain.user.enums.AppearanceStyle;
 import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.util.List;
 
 @Getter
 @Builder
@@ -37,17 +38,14 @@ public class UserProfileResponse {
     @Schema(description = "닉네임", example = "숭실대 카리나")
     private String nickname;
 
-    @Schema(description = "MBTI", example = "ISTJ")
+    @Schema(description = "MBTI", example = "INTJ")
     private String mbti;
-
-    @Schema(description = "외적 스타일", example = "CHIC")
-    private AppearanceStyle appearanceStyle;
 
     @Schema(description = "연락처", example = "@ssu_pick")
     private String contact;
 
-    @Schema(description = "어필 문구", example = "축제 같이 놀아요!")
-    private String appealMessage;
+    @Schema(description = "어필 항목 목록", example = "[\"고양이상\", \"160cm\", \"청순\"]")
+    private List<String> appeals;
 
     public static UserProfileResponse from(User user) {
         return UserProfileResponse.builder()
@@ -60,9 +58,8 @@ public class UserProfileResponse {
                 .onboardingStatus(user.getOnboardingStatus())
                 .nickname(user.getNickname())
                 .mbti(user.getMbti())
-                .appearanceStyle(user.getAppearanceStyle())
                 .contact(user.getContact())
-                .appealMessage(user.getAppealMessage())
+                .appeals(user.getAppeals())
                 .build();
     }
 }

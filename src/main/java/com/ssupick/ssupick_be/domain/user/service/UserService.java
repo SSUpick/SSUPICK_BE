@@ -61,14 +61,17 @@ public class UserService {
         return UserProfileResponse.from(getUserOrThrow(userId));
     }
 
-    // 온보딩 프로필 등록 — 중복 등록 방어
+    // 온보딩 프로필 등록 — 중복 등록 방어 + appeals 이중 방어
     @Transactional
     public void completeOnboarding(Long userId, UserOnboardingRequest request) {
         User user = getUserOrThrow(userId);
         if (user.getOnboardingStatus() == OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.ONBOARDING_ALREADY_COMPLETED);
         }
-        user.completeOnboarding(request.nickname(), request.mbti(), request.appearanceStyle(), request.contact(), request.appealMessage());
+        if (request.appeals().stream().anyMatch(a -> a == null || a.isBlank())) {
+            throw new GeneralException(ErrorStatus.INVALID_APPEAL_CONTENT);
+        }
+        user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals());
     }
 
     // 유저 카드 리스트 조회 — 온보딩 완료 유저, 본인 제외
@@ -81,7 +84,7 @@ public class UserService {
                 .toList();
     }
 
-    // 엔티티 변경이 필요한 경우 사용 (dirty checking 보장)
+    // 엔티티 변경이 필요한 경우 사용 — AuthService에서 logout/withdraw/reissue 시 dirty checking 보장
     @Transactional
     public User findByIdForUpdate(Long userId) {
         return getUserOrThrow(userId);

@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 @Schema(description = "유저 카드 응답 (리스트 조회용)")
@@ -19,8 +21,8 @@ public class UserCardResponse {
     @Schema(description = "MBTI", example = "INTJ")
     private String mbti;
 
-    @Schema(description = "어필 문구", example = "축제 같이 놀아요!")
-    private String appealMessage;
+    @Schema(description = "어필 항목 목록", example = "[\"고양이상\", \"160cm\", \"청순\"]")
+    private List<String> appeals;
 
     @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
     private String profileUrl;
@@ -30,7 +32,7 @@ public class UserCardResponse {
                 .userId(user.getId())
                 .nickname(user.getNickname())
                 .mbti(user.getMbti())
-                .appealMessage(user.getAppealMessage())
+                .appeals(user.getAppeals())
                 .profileUrl(user.getProfileUrl())
                 .build();
     }

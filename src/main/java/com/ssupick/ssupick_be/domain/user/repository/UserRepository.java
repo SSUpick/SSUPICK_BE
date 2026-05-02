@@ -14,5 +14,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 온보딩 완료 + 탈퇴하지 않은 유저 중 본인 제외 전체 조회
     List<User> findAllByOnboardingStatusAndDeletedFalseAndIdNot(OnboardingStatus onboardingStatus, Long excludeId);
-
 }
