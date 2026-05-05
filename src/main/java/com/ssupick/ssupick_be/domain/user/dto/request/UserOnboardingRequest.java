@@ -31,6 +31,6 @@ public record UserOnboardingRequest(
         String contact,
 
         @Schema(description = "성별 (여자, 남자)", example = "MALE OR FEMALE")
-        @NotBlank(message = "성별은 필수입니다.")
+        @NotNull(message = "성별은 필수입니다.")
         Gender gender
 ) {}
