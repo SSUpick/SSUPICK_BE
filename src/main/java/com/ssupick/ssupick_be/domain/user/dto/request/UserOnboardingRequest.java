@@ -1,5 +1,6 @@
 package com.ssupick.ssupick_be.domain.user.dto.request;
 
+import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
@@ -27,5 +28,9 @@ public record UserOnboardingRequest(
         @Schema(description = "연락처 (인스타그램, 전화번호 등)", example = "@ssu_pick")
         @NotBlank(message = "연락처는 필수입니다.")
         @Size(max = 100, message = "연락처는 100자 이하로 입력해주세요.")
-        String contact
+        String contact,
+
+        @Schema(description = "성별 (여자, 남자)", example = "MALE OR FEMALE")
+        @NotNull(message = "성별은 필수입니다.")
+        Gender gender
 ) {}

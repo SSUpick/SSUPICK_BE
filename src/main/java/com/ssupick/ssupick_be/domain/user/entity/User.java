@@ -119,13 +119,14 @@ public class User extends BaseEntity {
     }
 
     // 온보딩 프로필 등록 — 어필 항목 최대 3개 (인덱스 초과분은 null)
-    public void completeOnboarding(String nickname, String mbti, String contact, List<String> appeals) {
+    public void completeOnboarding(String nickname, String mbti, String contact, List<String> appeals, Gender gender) {
         this.nickname = nickname;
         this.mbti = mbti;
         this.contact = contact;
         this.appeal1 = appeals.size() >= 1 ? appeals.get(0) : null;
         this.appeal2 = appeals.size() >= 2 ? appeals.get(1) : null;
         this.appeal3 = appeals.size() >= 3 ? appeals.get(2) : null;
+        this.gender = gender;
         this.onboardingStatus = OnboardingStatus.COMPLETED;
     }
 

@@ -88,7 +88,7 @@ public class UserService {
         if (request.appeals() == null || request.appeals().stream().anyMatch(a -> a == null || a.isBlank())) {
             throw new GeneralException(ErrorStatus.INVALID_APPEAL_CONTENT);
         }
-        user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals());
+        user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals(), request.gender());
     }
 
     // 유저 카드 리스트 조회 — 온보딩 완료 유저, 본인 제외
