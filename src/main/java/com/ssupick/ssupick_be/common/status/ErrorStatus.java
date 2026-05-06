@@ -52,7 +52,16 @@ public enum ErrorStatus implements BaseStatus {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "사용자를 찾을 수 없습니다."),
     USER_ONBOARDING_INCOMPLETE(HttpStatus.FORBIDDEN, "USER_403_1", "온보딩을 완료하지 않은 유저입니다."),
     ONBOARDING_ALREADY_COMPLETED(HttpStatus.CONFLICT, "USER_409_1", "이미 온보딩을 완료한 유저입니다."),
-    INVALID_APPEAL_CONTENT(HttpStatus.BAD_REQUEST, "USER_400_1", "어필 항목 내용이 올바르지 않습니다.");
+    INVALID_APPEAL_CONTENT(HttpStatus.BAD_REQUEST, "USER_400_1", "어필 항목 내용이 올바르지 않습니다."),
+
+    /**
+     * AI Image
+     */
+    AI_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "AI_404_1", "AI 이미지를 찾을 수 없습니다."),
+    AI_IMAGE_GENERATION_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AI_429_1", "이미지 생성 횟수를 모두 사용했습니다."),
+    AI_IMAGE_NOT_OWNED(HttpStatus.FORBIDDEN, "AI_403_1", "해당 이미지에 대한 권한이 없습니다."),
+    AI_IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI_500_1", "이미지 업로드에 실패했습니다."),
+    AI_IMAGE_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI 이미지 생성에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
