@@ -22,11 +22,11 @@ public class AiImage extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 사용자가 업로드한 원본 사진 S3 URL
+    // 사용자가 업로드한 원본 사진 S3 key
     @Column(name = "original_image_url", length = 500, nullable = false)
     private String originalImageUrl;
 
-    // Gemini가 생성한 동물의 숲 스타일 이미지 S3 URL
+    // Gemini가 생성한 동물의 숲 스타일 이미지 S3 key (PENDING 상태에서는 null)
     @Column(name = "generated_image_url", length = 500)
     private String generatedImageUrl;
 
@@ -35,9 +35,21 @@ public class AiImage extends BaseEntity {
     @Column(name = "is_selected", nullable = false)
     private boolean selected = false;
 
-    // 생성 완료 시 생성된 이미지 URL 저장
-    public void saveGeneratedImageUrl(String generatedImageUrl) {
+    // 비동기 생성 상태 — PENDING / DONE / FAILED
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 10, nullable = false)
+    private AiImageStatus status = AiImageStatus.PENDING;
+
+    // 생성 완료 시 생성된 이미지 URL 저장 + 상태 DONE으로 변경
+    public void markDone(String generatedImageUrl) {
         this.generatedImageUrl = generatedImageUrl;
+        this.status = AiImageStatus.DONE;
+    }
+
+    // 생성 실패 시 상태 FAILED로 변경
+    public void markFailed() {
+        this.status = AiImageStatus.FAILED;
     }
 
     // 사용자가 이 이미지를 최종 프로필로 선택

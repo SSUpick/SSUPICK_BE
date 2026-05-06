@@ -31,23 +31,23 @@ public class WebClientConfig {
 
     /**
      * Gemini API 전용 WebClient
-     * - 이미지 생성은 수십 초 소요될 수 있으므로 타임아웃 60초로 설정
+     * - 이미지 생성 모델 특성상 응답이 느림 → 타임아웃 120초로 설정
      * - baseUrl 없이 생성 (GeminiImageClient에서 전체 URL 직접 사용)
      */
     @Bean
     public WebClient webClient() {
         HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)   // 연결 타임아웃 10초
-                .responseTimeout(Duration.ofSeconds(60))                 // 응답 타임아웃 60초
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)    // 연결 타임아웃 10초
+                .responseTimeout(Duration.ofSeconds(120))                 // 응답 타임아웃 120초
                 .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(60, TimeUnit.SECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS)));
+                        .addHandlerLast(new ReadTimeoutHandler(120, TimeUnit.SECONDS))  // 읽기 타임아웃 120초
+                        .addHandlerLast(new WriteTimeoutHandler(30, TimeUnit.SECONDS))); // 쓰기 타임아웃 30초 (이미지 전송)
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .codecs(configurer -> configurer
                         .defaultCodecs()
-                        .maxInMemorySize(10 * 1024 * 1024))   // 응답 버퍼 10MB (이미지 데이터)
+                        .maxInMemorySize(20 * 1024 * 1024))   // 응답 버퍼 20MB
                 .build();
     }
 }

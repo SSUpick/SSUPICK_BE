@@ -5,11 +5,13 @@ import com.ssupick.ssupick_be.common.s3.S3Uploader;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.aiimage.dto.response.AiImageResponse;
 import com.ssupick.ssupick_be.domain.aiimage.entity.AiImage;
+import com.ssupick.ssupick_be.domain.aiimage.entity.AiImageStatus;
 import com.ssupick.ssupick_be.domain.aiimage.repository.AiImageRepository;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,15 +30,12 @@ public class AiImageService {
     private final S3Uploader s3Uploader;
 
     /**
-     * AI 이미지 생성 전체 흐름
+     * [비동기] AI 이미지 생성 요청
      *
      * 1. 유저 조회 + 잔여 횟수 확인
      * 2. 원본 이미지 S3 업로드
-     * 3. AiImage 엔티티 저장 (generated URL은 아직 null)
-     * 4. Gemini API 호출
-     * 5. 생성 이미지 S3 업로드 + 엔티티 업데이트
-     * 6. 잔여 횟수 차감
-     * 7. Presigned URL 발급 후 응답 반환
+     * 3. AiImage 엔티티 PENDING 상태로 저장 후 즉시 응답 반환
+     * 4. 백그라운드에서 Gemini 호출 + 결과 저장 (별도 트랜잭션)
      */
     @Transactional
     public AiImageResponse generateImage(Long userId, MultipartFile originalImageFile) {
@@ -51,28 +50,87 @@ public class AiImageService {
         String originalKey = s3Uploader.upload(originalImageFile, "original");
         log.info("[AiImage] 원본 이미지 업로드 완료 - userId: {}, key: {}", userId, originalKey);
 
-        // 3. AiImage 엔티티 저장 (generated URL은 Gemini 응답 후 채움)
+        // 3. AiImage 엔티티 PENDING 상태로 저장
         AiImage aiImage = AiImage.builder()
                 .user(user)
                 .originalImageUrl(originalKey)
+                .status(AiImageStatus.PENDING)
                 .build();
         aiImageRepository.save(aiImage);
 
-        // 4. Gemini API 호출
-        byte[] generatedImageBytes = callGeminiWithFile(originalImageFile);
-
-        // 5. 생성 이미지 S3 업로드 + 엔티티 업데이트
-        String extension = extractExtension(originalImageFile.getOriginalFilename());
-        String generatedKey = s3Uploader.uploadBytes(generatedImageBytes, "generated", extension);
-        aiImage.saveGeneratedImageUrl(generatedKey);
-        log.info("[AiImage] 생성 이미지 업로드 완료 - userId: {}, key: {}", userId, generatedKey);
-
-        // 6. 잔여 횟수 차감 (User 엔티티 메서드 — 0이하면 예외)
+        // 횟수 선차감 — 백그라운드 실패 시 복구 로직은 processGeminiAsync에서 처리
         user.decreaseGenerationCount();
 
-        // 7. Presigned URL 발급 후 응답 반환
+        // 4. 백그라운드에서 Gemini 호출 (트랜잭션 분리 — @Async)
+        byte[] imageBytes = readFileBytes(originalImageFile);
+        String mimeType = originalImageFile.getContentType() != null
+                ? originalImageFile.getContentType() : "image/jpeg";
+        String extension = extractExtension(originalImageFile.getOriginalFilename());
+
+        processGeminiAsync(aiImage.getId(), userId, imageBytes, mimeType, extension);
+
+        // 5. PENDING 상태로 즉시 응답 반환
         String originalPresignedUrl = s3Uploader.generatePresignedUrl(originalKey);
-        String generatedPresignedUrl = s3Uploader.generatePresignedUrl(generatedKey);
+        return AiImageResponse.of(aiImage, originalPresignedUrl, null,
+                user.getRemainingGenerationCount());
+    }
+
+    /**
+     * [백그라운드] Gemini API 호출 + 결과 저장
+     * - @Async: 별도 스레드에서 실행 → 메인 요청 스레드 즉시 반환
+     * - @Transactional: 별도 트랜잭션으로 분리 (generateImage 트랜잭션과 독립)
+     * - 실패 시 status = FAILED + 횟수 복구
+     */
+    @Async
+    @Transactional
+    public void processGeminiAsync(Long aiImageId, Long userId,
+                                   byte[] imageBytes, String mimeType, String extension) {
+        AiImage aiImage = aiImageRepository.findById(aiImageId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.AI_IMAGE_NOT_FOUND));
+
+        try {
+            log.info("[AiImage] Gemini 비동기 호출 시작 - aiImageId: {}", aiImageId);
+
+            // Gemini API 호출 (타임아웃 제한 없음 — 백그라운드)
+            byte[] generatedImageBytes = geminiImageClient.generateAnimalCrossingImage(imageBytes, mimeType);
+
+            // 생성 이미지 S3 업로드
+            String generatedKey = s3Uploader.uploadBytes(generatedImageBytes, "generated", extension);
+            log.info("[AiImage] 생성 이미지 업로드 완료 - aiImageId: {}, key: {}", aiImageId, generatedKey);
+
+            // 상태 DONE + 생성 이미지 URL 저장
+            aiImage.markDone(generatedKey);
+
+        } catch (Exception e) {
+            log.error("[AiImage] Gemini 생성 실패 - aiImageId: {}", aiImageId, e);
+
+            // 상태 FAILED 처리
+            aiImage.markFailed();
+
+            // 횟수 복구 — 생성 실패 시 차감된 횟수 되돌림
+            userRepository.findByIdAndDeletedFalse(userId).ifPresent(user -> {
+                user.restoreGenerationCount();
+                log.info("[AiImage] 생성 실패로 횟수 복구 - userId: {}", userId);
+            });
+        }
+    }
+
+    /**
+     * 단건 상태 조회 — 프론트가 폴링으로 PENDING → DONE 확인 시 사용
+     */
+    @Transactional(readOnly = true)
+    public AiImageResponse getImageStatus(Long userId, Long aiImageId) {
+        User user = getActiveUserOrThrow(userId);
+        AiImage aiImage = aiImageRepository.findById(aiImageId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.AI_IMAGE_NOT_FOUND));
+
+        if (!aiImage.getUser().getId().equals(userId)) {
+            throw new GeneralException(ErrorStatus.AI_IMAGE_NOT_OWNED);
+        }
+
+        String originalPresignedUrl = s3Uploader.generatePresignedUrl(aiImage.getOriginalImageUrl());
+        String generatedPresignedUrl = aiImage.getGeneratedImageUrl() != null
+                ? s3Uploader.generatePresignedUrl(aiImage.getGeneratedImageUrl()) : null;
 
         return AiImageResponse.of(aiImage, originalPresignedUrl, generatedPresignedUrl,
                 user.getRemainingGenerationCount());
@@ -80,7 +138,6 @@ public class AiImageService {
 
     /**
      * 유저의 전체 AI 이미지 목록 조회
-     * 생성한 이미지들 + 각각의 Presigned URL 반환
      */
     @Transactional(readOnly = true)
     public List<AiImageResponse> getImageList(Long userId) {
@@ -100,17 +157,12 @@ public class AiImageService {
     }
 
     /**
-     * 최종 프로필 이미지 확정
-     *
-     * 1. 기존에 선택된 이미지 있으면 deselect
-     * 2. 선택한 이미지 select
-     * 3. User.profileUrl 업데이트
+     * 최종 프로필 이미지 확정 — DONE 상태 이미지만 선택 가능
      */
     @Transactional
     public void selectProfileImage(Long userId, Long aiImageId) {
         User user = getActiveUserOrThrow(userId);
 
-        // 선택하려는 이미지 조회 + 소유권 확인
         AiImage target = aiImageRepository.findById(aiImageId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.AI_IMAGE_NOT_FOUND));
 
@@ -118,7 +170,8 @@ public class AiImageService {
             throw new GeneralException(ErrorStatus.AI_IMAGE_NOT_OWNED);
         }
 
-        if (target.getGeneratedImageUrl() == null) {
+        // DONE 상태 아니면 선택 불가
+        if (target.getStatus() != AiImageStatus.DONE || target.getGeneratedImageUrl() == null) {
             throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_FAILED);
         }
 
@@ -141,10 +194,9 @@ public class AiImageService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
     }
 
-    private byte[] callGeminiWithFile(MultipartFile file) {
+    private byte[] readFileBytes(MultipartFile file) {
         try {
-            String mimeType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
-            return geminiImageClient.generateAnimalCrossingImage(file.getBytes(), mimeType);
+            return file.getBytes();
         } catch (IOException e) {
             throw new GeneralException(ErrorStatus.AI_IMAGE_UPLOAD_FAILED, e);
         }

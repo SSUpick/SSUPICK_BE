@@ -166,6 +166,13 @@ public class User extends BaseEntity {
         this.remainingGenerationCount--;
     }
 
+    // AI 이미지 생성 실패 시 횟수 복구 (최대 3 초과 방지)
+    public void restoreGenerationCount() {
+        if (this.remainingGenerationCount < 3) {
+            this.remainingGenerationCount++;
+        }
+    }
+
     // 최종 선택 이미지를 프로필 URL로 확정
     public void updateProfileUrl(String profileUrl) {
         this.profileUrl = profileUrl;
