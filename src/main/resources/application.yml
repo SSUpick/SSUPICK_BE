@@ -2,3 +2,7 @@ spring:
   profiles:
     active: prod
 
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+

@@ -5,6 +5,7 @@ import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
+import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileCommand;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,7 +30,7 @@ public class User extends BaseEntity {
     @Column(name = "name", length = 30)
     private String name;
 
-    @Column(name = "profile_url", length = 255)
+    @Column(name = "profile_url", length = 512)
     private String profileUrl;
 
     @Enumerated(EnumType.STRING)
@@ -54,22 +55,22 @@ public class User extends BaseEntity {
     @Column(name = "gender", length = 10)
     private Gender gender;
 
-    @Column(name = "nickname", length = 20)
+    @Column(name = "nickname", length = 10)
     private String nickname;
 
     @Column(name = "mbti", length = 4)
     private String mbti;
 
-    @Column(name = "contact", length = 100)
+    @Column(name = "contact", length = 50)
     private String contact;
 
-    @Column(name = "appeal1", length = 50)
+    @Column(name = "appeal1", length = 8)
     private String appeal1;
 
-    @Column(name = "appeal2", length = 50)
+    @Column(name = "appeal2", length = 8)
     private String appeal2;
 
-    @Column(name = "appeal3", length = 50)
+    @Column(name = "appeal3", length = 8)
     private String appeal3;
 
     @Builder.Default
@@ -80,6 +81,11 @@ public class User extends BaseEntity {
     @Builder.Default
     @Column(name = "remaining_generation_count", nullable = false)
     private int remainingGenerationCount = 3;
+
+    // 남은 쿠폰 개수
+    @Builder.Default
+    @Column(name = "remaining_coupon_count", nullable = false)
+    private int remainingCouponCount = 0;
 
     // 카카오 신규 유저 생성
     public static User createKakaoUser(
@@ -137,6 +143,16 @@ public class User extends BaseEntity {
         return Stream.of(appeal1, appeal2, appeal3)
                 .filter(a -> a != null && !a.isBlank())
                 .toList();
+    }
+
+    // 마이페이지 프로필 수정 — 온보딩 완료 이후 수정 가능
+    public void updateProfile(UpdateUserProfileCommand command) {
+        this.nickname = command.nickname();
+        this.mbti = command.mbti();
+        this.contact = command.contact();
+        this.appeal1 = command.appeals().size() >= 1 ? command.appeals().get(0) : null;
+        this.appeal2 = command.appeals().size() >= 2 ? command.appeals().get(1) : null;
+        this.appeal3 = command.appeals().size() >= 3 ? command.appeals().get(2) : null;
     }
 
     // 로그아웃 처리 — 리프레시 토큰 무효화

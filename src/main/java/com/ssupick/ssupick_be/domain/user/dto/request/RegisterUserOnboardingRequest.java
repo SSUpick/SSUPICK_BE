@@ -7,11 +7,11 @@ import jakarta.validation.constraints.*;
 import java.util.List;
 
 @Schema(description = "유저 온보딩 프로필 등록 요청")
-public record UserOnboardingRequest(
+public record RegisterUserOnboardingRequest(
 
         @Schema(description = "닉네임", example = "숭실대 카리나")
         @NotBlank(message = "닉네임은 필수입니다.")
-        @Size(max = 20, message = "닉네임은 20자 이하로 입력해주세요.")
+        @Size(max = 10, message = "닉네임은 10자 이하로 입력해주세요.")
         String nickname,
 
         @Schema(description = "MBTI", example = "INTJ")
@@ -23,11 +23,11 @@ public record UserOnboardingRequest(
         @NotNull(message = "어필 항목은 필수입니다.")
         @Size(min = 1, max = 3, message = "어필 항목은 1개 이상 3개 이하로 입력해주세요.")
         List<@NotBlank(message = "어필 항목 내용은 공백일 수 없습니다.")
-        @Size(max = 50, message = "어필 항목은 50자 이하로 입력해주세요.") String> appeals,
+        @Size(max = 8, message = "어필 항목은 8자 이하로 입력해주세요.") String> appeals,
 
         @Schema(description = "연락처 (인스타그램, 전화번호 등)", example = "@ssu_pick")
         @NotBlank(message = "연락처는 필수입니다.")
-        @Size(max = 100, message = "연락처는 100자 이하로 입력해주세요.")
+        @Size(min=2, max = 50, message = "연락처는 최소 2자, 최대 50자 이하로 입력해주세요.")
         String contact,
 
         @Schema(description = "성별 (여자, 남자)", example = "MALE OR FEMALE")
