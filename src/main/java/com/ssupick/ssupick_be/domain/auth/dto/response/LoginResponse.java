@@ -8,7 +8,8 @@ public record LoginResponse(
         String accessToken,
         String refreshToken,
         boolean onboardingCompleted,   // 온보딩 완료 여부
-        boolean aiImageGenerated       // selected=true 이미지 존재 여부
+        boolean aiImageGenerated,       // selected=true 이미지 존재 여부
+        int remainingCouponCount // 남은 쿠폰 개수
 ) {
     public static LoginResponse of(User user, String accessToken, String refreshToken,
                                    boolean aiImageGenerated) {
@@ -17,7 +18,8 @@ public record LoginResponse(
                 accessToken,
                 refreshToken,
                 user.getOnboardingStatus() == OnboardingStatus.COMPLETED,
-                aiImageGenerated
+                aiImageGenerated,
+                user.getRemainingCouponCount()
         );
     }
 }

@@ -82,6 +82,11 @@ public class User extends BaseEntity {
     @Column(name = "remaining_generation_count", nullable = false)
     private int remainingGenerationCount = 3;
 
+    // 남은 쿠폰 개수
+    @Builder.Default
+    @Column(name = "remaining_coupon_count", nullable = false)
+    private int remainingCouponCount = 0;
+
     // 카카오 신규 유저 생성
     public static User createKakaoUser(
             String oauthId, String email, String name, String profileUrl, DeviceType deviceType

@@ -47,6 +47,9 @@ public class GetUserProfileResponse {
     @Schema(description = "어필 항목 목록", example = "[\"고양이상\", \"160cm\", \"청순\"]")
     private List<String> appeals;
 
+    @Schema(description = "남은 쿠폰 갯수", example = "1")
+    private int remainingCouponCount;
+
     public static GetUserProfileResponse from(User user) {
         return GetUserProfileResponse.builder()
                 .userId(user.getId())
@@ -59,6 +62,7 @@ public class GetUserProfileResponse {
                 .mbti(user.getMbti())
                 .contact(user.getContact())
                 .appeals(user.getAppeals())
+                .remainingCouponCount(user.getRemainingCouponCount())
                 .build();
     }
 }
