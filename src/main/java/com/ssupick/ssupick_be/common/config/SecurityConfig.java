@@ -49,6 +49,13 @@ public class SecurityConfig {
     };
 
     /**
+     * User 관련 경로
+     */
+    public static final String[] USER_URIS = {
+            "/api/users"
+    };
+
+    /**
      * 헬스 체크 관련 경로
      */
     private static final String[] HEALTH_URIS = {
@@ -69,6 +76,7 @@ public class SecurityConfig {
                         .requestMatchers(SWAGGER_URIS).permitAll()
                         .requestMatchers(OAUTH_URIS).permitAll()
                         .requestMatchers(AUTH_URIS).permitAll()
+                        .requestMatchers(USER_URIS).permitAll()
                         .requestMatchers(HEALTH_URIS).permitAll()
                         .anyRequest().authenticated()
                 )

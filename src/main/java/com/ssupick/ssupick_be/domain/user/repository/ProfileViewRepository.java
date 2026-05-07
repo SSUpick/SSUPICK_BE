@@ -17,4 +17,6 @@ public interface ProfileViewRepository extends JpaRepository<ProfileView, Long> 
 
     // 나를 열람한 사람 목록 — 최신순
     List<ProfileView> findByTargetOrderByViewedAtDesc(User target);
+
+    void deleteByViewerOrTarget(User viewer, User target);
 }

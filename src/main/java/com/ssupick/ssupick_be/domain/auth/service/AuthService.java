@@ -5,6 +5,7 @@ import com.ssupick.ssupick_be.common.jwt.JwtService;
 import com.ssupick.ssupick_be.common.jwt.TokenIssuance;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.aiimage.repository.AiImageRepository;
+import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
 import com.ssupick.ssupick_be.domain.auth.dto.request.LoginRequest;
 import com.ssupick.ssupick_be.domain.auth.dto.response.LoginResponse;
 import com.ssupick.ssupick_be.domain.auth.dto.response.ReissueResponse;
@@ -28,6 +29,7 @@ public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
     private final AiImageRepository aiImageRepository;
+    private final AiImageService aiImageService;
 
     @Value("${test.secret-key}")
     private String testSecretKey;
@@ -77,8 +79,7 @@ public class AuthService {
     // 유저 조회 후 soft delete 및 리프레시 토큰 무효화
     @Transactional
     public void withdraw(Long userId) {
-        User user = userService.findByIdForUpdate(userId);
-        user.withdraw();
+        userService.withdraw(userId);
     }
 
 }
