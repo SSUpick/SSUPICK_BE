@@ -4,13 +4,13 @@ import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
-import com.ssupick.ssupick_be.domain.user.dto.response.GetTargetUserProfileResponse;
-import com.ssupick.ssupick_be.domain.user.dto.response.GetUserCardResponse;
-import com.ssupick.ssupick_be.domain.user.dto.response.GetUserProfileResponse;
+import com.ssupick.ssupick_be.domain.user.dto.response.*;
+import com.ssupick.ssupick_be.domain.user.entity.ProfileView;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
+import com.ssupick.ssupick_be.domain.user.repository.ProfileViewRepository;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ProfileViewRepository profileViewRepository;
 
     // ───────────────────────────── 공통 내부 헬퍼 ─────────────────────────────
 
@@ -63,13 +64,23 @@ public class UserService {
                 .orElseGet(() -> userRepository.save(User.createTestUser(testUserId, deviceType)));
     }
 
-    // 상대 유저 프로필 조회 — 탈퇴 유저 및 온보딩 미완료 유저 접근 차단
-    @Transactional(readOnly = true)
-    public GetTargetUserProfileResponse getTargetUserProfile(Long targetUserId) {
-        User target = getActiveUserOrThrow(targetUserId);
+    // 상대 유저 프로필 조회 — 자기 자신 열람 방지 + 열람 기록 upsert
+    @Transactional
+    public GetTargetUserProfileResponse getTargetUserProfile(Long viewerId, Long targetId) {
+        if (viewerId.equals(targetId)) {
+            throw new GeneralException(ErrorStatus.SELF_VIEW_NOT_ALLOWED);
+        }
+        User viewer = getActiveUserOrThrow(viewerId);
+        User target = getActiveUserOrThrow(targetId);
         if (target.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
         }
+        // (추후 쿠폰 차감 로직 추가 예정)
+        profileViewRepository.findByViewerAndTarget(viewer, target)
+                .ifPresentOrElse(
+                        ProfileView::updateViewedAt,
+                        () -> profileViewRepository.save(new ProfileView(viewer, target))
+                );
         return GetTargetUserProfileResponse.from(target);
     }
 
@@ -100,6 +111,23 @@ public class UserService {
                 .stream()
                 .map(GetUserCardResponse::from)
                 .toList();
+    }
+
+    // 내가 열람한 / 나를 열람한 유저 목록 통합 조회 — 최신순
+    @Transactional(readOnly = true)
+    public GetProfileViewListResponse getProfileViewList(Long userId) {
+        User user = getActiveUserOrThrow(userId);
+        // 내가 열람한 사람 목록
+        List<GetUserViewResponse> viewedUsers = profileViewRepository.findByViewerOrderByViewedAtDesc(user)
+                .stream()
+                .map(GetUserViewResponse::ofViewed)
+                .toList();
+        // 나를 열람한 사람 목록
+        List<GetUserViewResponse> viewerUsers = profileViewRepository.findByTargetOrderByViewedAtDesc(user)
+                .stream()
+                .map(GetUserViewResponse::ofViewer)
+                .toList();
+        return GetProfileViewListResponse.of(viewedUsers, viewerUsers);
     }
 
     // 마이페이지 프로필 수정 — 온보딩 완료 유저만 수정 가능

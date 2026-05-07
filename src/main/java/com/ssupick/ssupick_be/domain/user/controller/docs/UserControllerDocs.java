@@ -6,6 +6,7 @@ import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetTargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserProfileResponse;
+import com.ssupick.ssupick_be.domain.user.dto.response.GetProfileViewListResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -94,5 +95,18 @@ public interface UserControllerDocs {
     ResponseEntity<ApiResponse<Void>> updateUserProfile(
             @AuthenticationPrincipal Long userId,
             @RequestBody @Valid UpdateUserProfileRequest request
+    );
+
+    @Operation(summary = "열람 목록 통합 조회", description = "내가 열람한 유저 목록과 나를 열람한 유저 목록을 한 번에 조회합니다. 각각 최신순으로 반환됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = GetProfileViewListResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    ResponseEntity<ApiResponse<GetProfileViewListResponse>> getProfileViewList(
+            @AuthenticationPrincipal Long userId
     );
 }

@@ -8,6 +8,7 @@ import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetTargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserProfileResponse;
+import com.ssupick.ssupick_be.domain.user.dto.response.GetProfileViewListResponse;
 import com.ssupick.ssupick_be.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -58,7 +58,7 @@ public class UserController implements UserControllerDocs {
             @AuthenticationPrincipal Long userId,
             @PathVariable Long targetUserId
     ) {
-        GetTargetUserProfileResponse response = userService.getTargetUserProfile(targetUserId);
+        GetTargetUserProfileResponse response = userService.getTargetUserProfile(userId, targetUserId);
         return ApiResponse.success(SuccessStatus.GET_USER_TARGET_PROFILE_SUCCESS, response);
     }
 
@@ -70,5 +70,14 @@ public class UserController implements UserControllerDocs {
     ) {
         userService.updateUserProfile(userId, request);
         return ApiResponse.success(SuccessStatus.UPDATE_USER_PROFILE_SUCCESS);
+    }
+
+    @GetMapping("/me/profile-views")
+    @Override
+    public ResponseEntity<ApiResponse<GetProfileViewListResponse>> getProfileViewList(
+            @AuthenticationPrincipal Long userId
+    ) {
+        GetProfileViewListResponse response = userService.getProfileViewList(userId);
+        return ApiResponse.success(SuccessStatus.GET_PROFILE_VIEW_LIST_SUCCESS, response);
     }
 }
