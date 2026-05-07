@@ -54,9 +54,6 @@ public class User extends BaseEntity {
     @Column(name = "gender", length = 10)
     private Gender gender;
 
-    @Column(name = "age")
-    private Integer age;
-
     @Column(name = "nickname", length = 20)
     private String nickname;
 
@@ -78,6 +75,11 @@ public class User extends BaseEntity {
     @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
+
+    // AI 이미지 생성 잔여 횟수 (최초 3회, 서버에서만 관리)
+    @Builder.Default
+    @Column(name = "remaining_generation_count", nullable = false)
+    private int remainingGenerationCount = 3;
 
     // 카카오 신규 유저 생성
     public static User createKakaoUser(
@@ -151,5 +153,25 @@ public class User extends BaseEntity {
     // 리프레시 토큰 업데이트
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    // AI 이미지 생성 횟수 차감 — 0 이하면 예외
+    public void decreaseGenerationCount() {
+        if (this.remainingGenerationCount <= 0) {
+            throw new IllegalStateException("이미지 생성 횟수가 부족합니다.");
+        }
+        this.remainingGenerationCount--;
+    }
+
+    // AI 이미지 생성 실패 시 횟수 복구 (최대 3 초과 방지)
+    public void restoreGenerationCount() {
+        if (this.remainingGenerationCount < 3) {
+            this.remainingGenerationCount++;
+        }
+    }
+
+    // 최종 선택 이미지를 프로필 URL로 확정
+    public void updateProfileUrl(String profileUrl) {
+        this.profileUrl = profileUrl;
     }
 }

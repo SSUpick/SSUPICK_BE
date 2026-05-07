@@ -4,6 +4,7 @@ import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.jwt.JwtService;
 import com.ssupick.ssupick_be.common.jwt.TokenIssuance;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
+import com.ssupick.ssupick_be.domain.aiimage.repository.AiImageRepository;
 import com.ssupick.ssupick_be.domain.auth.dto.request.LoginRequest;
 import com.ssupick.ssupick_be.domain.auth.dto.response.LoginResponse;
 import com.ssupick.ssupick_be.domain.auth.dto.response.ReissueResponse;
@@ -26,6 +27,7 @@ public class AuthService {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final AiImageRepository aiImageRepository;
 
     @Value("${test.secret-key}")
     private String testSecretKey;
@@ -41,8 +43,9 @@ public class AuthService {
 
         User user = userService.findOrCreateTestUser(request.testUserId(), request.deviceType());
         TokenIssuance tokens = jwtService.issueTokens(user);
+        boolean aiImageGenerated = aiImageRepository.existsByUserAndSelectedTrue(user);
 
-        return new LoginResponse(user.getId(), tokens.accessToken(), tokens.refreshToken());
+        return LoginResponse.of(user, tokens.accessToken(), tokens.refreshToken(), aiImageGenerated);
     }
 
     @Transactional

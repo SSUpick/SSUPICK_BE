@@ -31,7 +31,14 @@ public enum SuccessStatus implements BaseStatus {
     /**
      * OAuth
      */
-    OAUTH_KAKAO_LOGIN_SUCCESS(HttpStatus.OK, "OAUTH_200_1", "카카오 로그인에 성공했습니다.");
+    OAUTH_KAKAO_LOGIN_SUCCESS(HttpStatus.OK, "OAUTH_200_1", "카카오 로그인에 성공했습니다."),
+
+    /**
+     * AI Image
+     */
+    AI_IMAGE_GENERATE_SUCCESS(HttpStatus.OK, "AI_200_1", "AI 이미지 생성에 성공했습니다."),
+    AI_IMAGE_LIST_SUCCESS(HttpStatus.OK, "AI_200_2", "AI 이미지 목록 조회에 성공했습니다."),
+    AI_IMAGE_SELECT_SUCCESS(HttpStatus.OK, "AI_200_3", "프로필 이미지 확정에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
