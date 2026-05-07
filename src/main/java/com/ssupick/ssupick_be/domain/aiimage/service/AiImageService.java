@@ -47,7 +47,7 @@ public class AiImageService {
         }
 
         // 2. 원본 이미지 S3 업로드
-        String originalKey = s3Uploader.upload(originalImageFile, "original");
+        String originalKey = s3Uploader.upload(originalImageFile, "original/" + userId);
         log.info("[AiImage] 원본 이미지 업로드 완료 - userId: {}, key: {}", userId, originalKey);
 
         // 3. AiImage 엔티티 PENDING 상태로 저장
@@ -95,7 +95,7 @@ public class AiImageService {
             byte[] generatedImageBytes = geminiImageClient.generateAnimalCrossingImage(imageBytes, mimeType);
 
             // 생성 이미지 S3 업로드
-            String generatedKey = s3Uploader.uploadBytes(generatedImageBytes, "generated", extension);
+            String generatedKey = s3Uploader.uploadBytes(generatedImageBytes, "generated/" + userId, extension);
             log.info("[AiImage] 생성 이미지 업로드 완료 - aiImageId: {}, key: {}", aiImageId, generatedKey);
 
             // 상태 DONE + 생성 이미지 URL 저장
