@@ -165,4 +165,8 @@ public class AiImageService {
         if (filename == null || !filename.contains(".")) return "jpg";
         return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
     }
+
+    public void deleteByUser(User user) {
+        aiImageRepository.deleteAllByUser(user);
+    }
 }

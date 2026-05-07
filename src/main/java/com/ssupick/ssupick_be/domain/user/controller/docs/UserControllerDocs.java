@@ -44,8 +44,6 @@ public interface UserControllerDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "리스트 조회 성공",
                     content = @Content(schema = @Schema(implementation = GetUserCardResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     ResponseEntity<ApiResponse<List<GetUserCardResponse>>> getUserCardList(
             @AuthenticationPrincipal Long userId

@@ -2,6 +2,7 @@ package com.ssupick.ssupick_be.domain.user.service;
 
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
+import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
 
+    private final AiImageService aiImageService;
     private final UserRepository userRepository;
     private final ProfileViewRepository profileViewRepository;
 
@@ -145,6 +147,17 @@ public class UserService {
     @Transactional
     public User findByIdForUpdate(Long userId) {
         return getUserOrThrow(userId);
+    }
+
+    public void withdraw(Long userId) {
+        User user = getUserOrThrow(userId);
+        aiImageService.deleteByUser(user);
+        deleteProfileView(user);
+        userRepository.delete(user);
+    }
+    // 유저 관련 열람 기록 삭제
+    public void deleteProfileView(User user) {
+        profileViewRepository.deleteByViewerAndTarget(user, user);
     }
 
 }
