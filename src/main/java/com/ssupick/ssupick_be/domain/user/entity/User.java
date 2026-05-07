@@ -30,7 +30,7 @@ public class User extends BaseEntity {
     @Column(name = "name", length = 30)
     private String name;
 
-    @Column(name = "profile_url", length = 255)
+    @Column(name = "profile_url", length = 512)
     private String profileUrl;
 
     @Enumerated(EnumType.STRING)
@@ -55,22 +55,22 @@ public class User extends BaseEntity {
     @Column(name = "gender", length = 10)
     private Gender gender;
 
-    @Column(name = "nickname", length = 20)
+    @Column(name = "nickname", length = 10)
     private String nickname;
 
     @Column(name = "mbti", length = 4)
     private String mbti;
 
-    @Column(name = "contact", length = 100)
+    @Column(name = "contact", length = 50)
     private String contact;
 
-    @Column(name = "appeal1", length = 50)
+    @Column(name = "appeal1", length = 8)
     private String appeal1;
 
-    @Column(name = "appeal2", length = 50)
+    @Column(name = "appeal2", length = 8)
     private String appeal2;
 
-    @Column(name = "appeal3", length = 50)
+    @Column(name = "appeal3", length = 8)
     private String appeal3;
 
     @Builder.Default
