@@ -74,7 +74,13 @@ public class GeminiImageClient {
 
                 for (Part part : parts) {
                     if (part.inlineData().isPresent()) {
-                        byte[] imageBytes = part.inlineData().get().data().get();
+                        var inlineDataOpt = part.inlineData();
+                        if (inlineDataOpt.isEmpty())
+                            continue;
+                        var imageBytesOpt = inlineDataOpt.get().data();
+                        if (imageBytesOpt.isEmpty() || imageBytesOpt.get().length == 0)
+                            continue;
+                        byte[] imageBytes = imageBytesOpt.get();
                         log.info("[Gemini] 이미지 생성 성공");
                         return imageBytes;
                     }

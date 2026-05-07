@@ -35,7 +35,7 @@ public class GeminiAsyncProcessor {
      * @Async  — 별도 스레드에서 실행 (메인 요청 즉시 반환)
      * @Transactional — 독립 트랜잭션 (generateImage 트랜잭션과 분리)
      */
-    @Async
+    @Async("aiImageExecutor")
     @Transactional
     public void process(Long aiImageId, Long userId,
                         byte[] imageBytes, String mimeType, String extension) {
