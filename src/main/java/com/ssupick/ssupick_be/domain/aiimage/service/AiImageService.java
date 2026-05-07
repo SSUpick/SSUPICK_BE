@@ -11,7 +11,6 @@ import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,12 +25,11 @@ public class AiImageService {
 
     private final UserRepository userRepository;
     private final AiImageRepository aiImageRepository;
-    private final GeminiImageClient geminiImageClient;
+    private final GeminiAsyncProcessor geminiAsyncProcessor;
     private final S3Uploader s3Uploader;
 
     /**
      * [비동기] AI 이미지 생성 요청
-     *
      * 1. 유저 조회 + 잔여 횟수 확인
      * 2. 원본 이미지 S3 업로드
      * 3. AiImage 엔티티 PENDING 상태로 저장 후 즉시 응답 반환
@@ -40,11 +38,12 @@ public class AiImageService {
     @Transactional
     public AiImageResponse generateImage(Long userId, MultipartFile originalImageFile) {
 
-        // 1. 유저 조회 + 잔여 횟수 확인
+        // 1. 유저 조회 + 잔여 횟수 확인 + 이미 AI 이미지 생성했는지 확인
         User user = getActiveUserOrThrow(userId);
         if (user.getRemainingGenerationCount() <= 0) {
             throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_LIMIT_EXCEEDED);
         }
+
 
         // 2. 원본 이미지 S3 업로드
         String originalKey = s3Uploader.upload(originalImageFile, "original/" + userId);
@@ -61,58 +60,19 @@ public class AiImageService {
         // 횟수 선차감 — 백그라운드 실패 시 복구 로직은 processGeminiAsync에서 처리
         user.decreaseGenerationCount();
 
-        // 4. 백그라운드에서 Gemini 호출 (트랜잭션 분리 — @Async)
+        // 4. 백그라운드에서 Gemini 호출 — 별도 빈(GeminiAsyncProcessor)으로 위임
+        // self-invocation 방지: 같은 클래스 내 @Async 호출은 프록시를 거치지 않아 동작 안 함
         byte[] imageBytes = readFileBytes(originalImageFile);
         String mimeType = originalImageFile.getContentType() != null
                 ? originalImageFile.getContentType() : "image/jpeg";
         String extension = extractExtension(originalImageFile.getOriginalFilename());
 
-        processGeminiAsync(aiImage.getId(), userId, imageBytes, mimeType, extension);
+        geminiAsyncProcessor.process(aiImage.getId(), userId, imageBytes, mimeType, extension);
 
         // 5. PENDING 상태로 즉시 응답 반환
         String originalPresignedUrl = s3Uploader.generatePresignedUrl(originalKey);
         return AiImageResponse.of(aiImage, originalPresignedUrl, null,
                 user.getRemainingGenerationCount());
-    }
-
-    /**
-     * [백그라운드] Gemini API 호출 + 결과 저장
-     * - @Async: 별도 스레드에서 실행 → 메인 요청 스레드 즉시 반환
-     * - @Transactional: 별도 트랜잭션으로 분리 (generateImage 트랜잭션과 독립)
-     * - 실패 시 status = FAILED + 횟수 복구
-     */
-    @Async
-    @Transactional
-    public void processGeminiAsync(Long aiImageId, Long userId,
-                                   byte[] imageBytes, String mimeType, String extension) {
-        AiImage aiImage = aiImageRepository.findById(aiImageId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.AI_IMAGE_NOT_FOUND));
-
-        try {
-            log.info("[AiImage] Gemini 비동기 호출 시작 - aiImageId: {}", aiImageId);
-
-            // Gemini API 호출 (타임아웃 제한 없음 — 백그라운드)
-            byte[] generatedImageBytes = geminiImageClient.generateAnimalCrossingImage(imageBytes, mimeType);
-
-            // 생성 이미지 S3 업로드
-            String generatedKey = s3Uploader.uploadBytes(generatedImageBytes, "generated/" + userId, extension);
-            log.info("[AiImage] 생성 이미지 업로드 완료 - aiImageId: {}, key: {}", aiImageId, generatedKey);
-
-            // 상태 DONE + 생성 이미지 URL 저장
-            aiImage.markDone(generatedKey);
-
-        } catch (Exception e) {
-            log.error("[AiImage] Gemini 생성 실패 - aiImageId: {}", aiImageId, e);
-
-            // 상태 FAILED 처리
-            aiImage.markFailed();
-
-            // 횟수 복구 — 생성 실패 시 차감된 횟수 되돌림
-            userRepository.findByIdAndDeletedFalse(userId).ifPresent(user -> {
-                user.restoreGenerationCount();
-                log.info("[AiImage] 생성 실패로 횟수 복구 - userId: {}", userId);
-            });
-        }
     }
 
     /**
@@ -179,10 +139,9 @@ public class AiImageService {
         aiImageRepository.findByUserAndSelectedTrue(user)
                 .ifPresent(AiImage::deselect);
 
-        // 새 이미지 선택 + 프로필 URL 반영
+        // 새 이미지 선택 + 프로필 URL 반영 — S3 key 저장 (Presigned URL은 만료되므로 저장 X)
         target.select();
-        String presignedUrl = s3Uploader.generatePresignedUrl(target.getGeneratedImageUrl());
-        user.updateProfileUrl(presignedUrl);
+        user.updateProfileUrl(target.getGeneratedImageUrl());
 
         log.info("[AiImage] 프로필 이미지 확정 - userId: {}, aiImageId: {}", userId, aiImageId);
     }

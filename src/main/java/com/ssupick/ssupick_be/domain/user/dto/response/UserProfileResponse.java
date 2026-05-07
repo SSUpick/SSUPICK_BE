@@ -54,7 +54,6 @@ public class UserProfileResponse {
                 .email(user.getEmail())
                 .profileUrl(user.getProfileUrl())
                 .gender(user.getGender())
-                .age(user.getAge())
                 .onboardingStatus(user.getOnboardingStatus())
                 .nickname(user.getNickname())
                 .mbti(user.getMbti())
