@@ -5,7 +5,7 @@ import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
-import com.ssupick.ssupick_be.domain.user.dto.request.UserUpdateCommand;
+import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileCommand;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -141,7 +141,7 @@ public class User extends BaseEntity {
     }
 
     // 마이페이지 프로필 수정 — 온보딩 완료 이후 수정 가능
-    public void updateProfile(UserUpdateCommand command) {
+    public void updateProfile(UpdateUserProfileCommand command) {
         this.nickname = command.nickname();
         this.mbti = command.mbti();
         this.contact = command.contact();

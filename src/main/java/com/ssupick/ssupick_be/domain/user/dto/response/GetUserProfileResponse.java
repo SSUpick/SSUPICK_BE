@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Builder
 @Schema(description = "유저 프로필 조회 응답")
-public class UserProfileResponse {
+public class GetUserProfileResponse {
 
     @Schema(description = "유저 ID", example = "1")
     private Long userId;
@@ -47,8 +47,8 @@ public class UserProfileResponse {
     @Schema(description = "어필 항목 목록", example = "[\"고양이상\", \"160cm\", \"청순\"]")
     private List<String> appeals;
 
-    public static UserProfileResponse from(User user) {
-        return UserProfileResponse.builder()
+    public static GetUserProfileResponse from(User user) {
+        return GetUserProfileResponse.builder()
                 .userId(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
