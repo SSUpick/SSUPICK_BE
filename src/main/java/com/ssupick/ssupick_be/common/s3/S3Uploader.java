@@ -1,5 +1,7 @@
 package com.ssupick.ssupick_be.common.s3;
 
+import com.ssupick.ssupick_be.common.exception.GeneralException;
+import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +33,7 @@ public class S3Uploader {
     /**
      * MultipartFile → S3 업로드 후 S3 key 반환
      * key 형식: {folder}/{UUID}.{확장자}
-     * ex) original/abc123.jpg
+     * ex) original/{userId}/UUID.jpg
      */
     public String upload(MultipartFile file, String folder) {
         validateImageFile(file);
@@ -51,7 +53,8 @@ public class S3Uploader {
             return key;
 
         } catch (IOException e) {
-            throw new RuntimeException("S3 업로드 중 파일을 읽을 수 없습니다.", e);
+            log.error("[S3] 업로드 실패 - key: {}", key, e);
+            throw new GeneralException(ErrorStatus.AI_IMAGE_UPLOAD_FAILED, e);
         }
     }
 
@@ -106,21 +109,23 @@ public class S3Uploader {
 
     // ── private 헬퍼 ──────────────────────────────────────────────────────────
 
-    /** 이미지 파일 유효성 검증 (형식, 크기) */
+    /** 이미지 파일 유효성 검증 (형식, 크기) — 프로젝트 예외 체계 통일 */
     private void validateImageFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+            throw new GeneralException(ErrorStatus.AI_IMAGE_UPLOAD_FAILED);
         }
 
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다. contentType: " + contentType);
+            log.warn("[S3] 유효하지 않은 파일 형식 - contentType: {}", contentType);
+            throw new GeneralException(ErrorStatus.AI_IMAGE_UPLOAD_FAILED);
         }
 
         // 10MB 제한
         long maxSize = 10 * 1024 * 1024L;
         if (file.getSize() > maxSize) {
-            throw new IllegalArgumentException("파일 크기는 10MB 이하여야 합니다.");
+            log.warn("[S3] 파일 크기 초과 - size: {}MB", file.getSize() / (1024 * 1024));
+            throw new GeneralException(ErrorStatus.AI_IMAGE_UPLOAD_FAILED);
         }
     }
 
