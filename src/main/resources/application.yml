@@ -1,4 +1,8 @@
 spring:
   profiles:
-    active: prod
+    active: local
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
 
