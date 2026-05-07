@@ -58,6 +58,30 @@ public interface AiImageControllerDocs {
     );
 
     @Operation(
+            summary = "AI 이미지 단건 상태 조회",
+            description = """
+                    생성 요청 후 PENDING 상태인 이미지의 완료 여부를 폴링할 때 사용합니다.
+                    - 프론트에서 3~5초 간격으로 반복 호출 권장
+                    - status: PENDING(생성 중) / DONE(완료) / FAILED(실패)
+                    - DONE 상태일 때 generatedImageUrl이 채워집니다.
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상태 조회 성공",
+                    content = @Content(schema = @Schema(implementation = AiImageResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 이미지가 아님",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "이미지를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    ResponseEntity<ApiResponse<AiImageResponse>> getImageStatus(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long aiImageId
+    );
+
+    @Operation(
             summary = "최종 프로필 이미지 확정",
             description = """
                     생성된 이미지 중 하나를 최종 프로필 이미지로 선택합니다.

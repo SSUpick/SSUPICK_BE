@@ -44,6 +44,7 @@ public class AiImageController implements AiImageControllerDocs {
 
     // 단건 상태 조회 — 프론트가 PENDING → DONE 폴링 시 사용
     @GetMapping("/{aiImageId}/status")
+    @Override
     public ResponseEntity<ApiResponse<AiImageResponse>> getImageStatus(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long aiImageId
