@@ -157,7 +157,7 @@ public class UserService {
     }
     // 유저 관련 열람 기록 삭제
     public void deleteProfileView(User user) {
-        profileViewRepository.deleteByViewerAndTarget(user, user);
+        profileViewRepository.deleteByViewerOrTarget(user, user);
     }
 
 }
