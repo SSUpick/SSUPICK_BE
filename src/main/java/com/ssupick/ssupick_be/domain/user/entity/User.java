@@ -5,6 +5,7 @@ import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
+import com.ssupick.ssupick_be.domain.user.dto.request.UserUpdateCommand;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -137,6 +138,16 @@ public class User extends BaseEntity {
         return Stream.of(appeal1, appeal2, appeal3)
                 .filter(a -> a != null && !a.isBlank())
                 .toList();
+    }
+
+    // 마이페이지 프로필 수정 — 온보딩 완료 이후 수정 가능
+    public void updateProfile(UserUpdateCommand command) {
+        this.nickname = command.nickname();
+        this.mbti = command.mbti();
+        this.contact = command.contact();
+        this.appeal1 = command.appeals().size() >= 1 ? command.appeals().get(0) : null;
+        this.appeal2 = command.appeals().size() >= 2 ? command.appeals().get(1) : null;
+        this.appeal3 = command.appeals().size() >= 3 ? command.appeals().get(2) : null;
     }
 
     // 로그아웃 처리 — 리프레시 토큰 무효화

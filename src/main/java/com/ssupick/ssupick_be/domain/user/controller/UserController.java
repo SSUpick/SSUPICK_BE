@@ -4,6 +4,7 @@ import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.common.status.SuccessStatus;
 import com.ssupick.ssupick_be.domain.user.controller.docs.UserControllerDocs;
 import com.ssupick.ssupick_be.domain.user.dto.request.UserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.UserUpdateRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.TargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.UserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.UserProfileResponse;
@@ -59,5 +60,15 @@ public class UserController implements UserControllerDocs {
     ) {
         List<UserCardResponse> response = userService.getUserCardList(userId);
         return ApiResponse.success(SuccessStatus.GET_USER_CARD_LIST_SUCCESS, response);
+    }
+
+    @PutMapping("/me")
+    @Override
+    public ResponseEntity<ApiResponse<Void>> updateProfile(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid UserUpdateRequest request
+    ) {
+        userService.updateProfile(userId, request);
+        return ApiResponse.success(SuccessStatus.UPDATE_USER_PROFILE_SUCCESS);
     }
 }

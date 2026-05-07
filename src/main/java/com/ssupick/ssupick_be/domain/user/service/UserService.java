@@ -3,6 +3,7 @@ package com.ssupick.ssupick_be.domain.user.service;
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.user.dto.request.UserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.UserUpdateRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.TargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.UserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.UserProfileResponse;
@@ -99,6 +100,16 @@ public class UserService {
                 .stream()
                 .map(UserCardResponse::from)
                 .toList();
+    }
+
+    // 마이페이지 프로필 수정 — 온보딩 완료 유저만 수정 가능
+    @Transactional
+    public void updateProfile(Long userId, UserUpdateRequest request) {
+        User user = getActiveUserOrThrow(userId);
+        if (user.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
+            throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
+        }
+        user.updateProfile(request.toCommand());
     }
 
     // AuthService 전용 — logout/withdraw/reissue 시 사용

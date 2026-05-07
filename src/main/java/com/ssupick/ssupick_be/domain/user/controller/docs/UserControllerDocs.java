@@ -2,6 +2,7 @@ package com.ssupick.ssupick_be.domain.user.controller.docs;
 
 import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.domain.user.dto.request.UserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.UserUpdateRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.TargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.UserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.UserProfileResponse;
@@ -76,5 +77,22 @@ public interface UserControllerDocs {
     })
     ResponseEntity<ApiResponse<List<UserCardResponse>>> getUserCardList(
             @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(summary = "마이페이지 프로필 수정", description = "닉네임, MBTI, 어필 항목, 연락처를 수정합니다. 온보딩 완료 유저만 수정 가능합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검사 실패)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "온보딩 미완료 유저",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    ResponseEntity<ApiResponse<Void>> updateProfile(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid UserUpdateRequest request
     );
 }
