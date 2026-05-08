@@ -190,4 +190,17 @@ public class User extends BaseEntity {
     public void updateProfileUrl(String profileUrl) {
         this.profileUrl = profileUrl;
     }
+
+    // 쿠폰 충전
+    public void increaseCouponCount(int count) {
+        this.remainingCouponCount += count;
+    }
+
+    // 프로필 열람 쿠폰 차감
+    public void decreaseCouponCount() {
+        if (this.remainingCouponCount <= 0) {
+            throw new IllegalStateException("프로필 조회 쿠폰이 부족합니다.");
+        }
+        this.remainingCouponCount--;
+    }
 }

@@ -45,7 +45,8 @@ public enum SuccessStatus implements BaseStatus {
     /**
      * Payment
      */
-    PAYMENT_VERIFY_SUCCESS(HttpStatus.OK, "PAYMENT_200_1", "결제 검증에 성공했습니다.");
+    PAYMENT_VERIFY_SUCCESS(HttpStatus.OK, "PAYMENT_200_1", "결제 검증에 성공했습니다."),
+    COUPON_PRODUCT_LIST_SUCCESS(HttpStatus.OK, "PAYMENT_200_2", "쿠폰 상품 목록 조회에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

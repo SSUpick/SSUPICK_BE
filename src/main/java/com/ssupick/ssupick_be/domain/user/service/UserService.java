@@ -77,7 +77,11 @@ public class UserService {
         if (target.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
         }
-        // (추후 쿠폰 차감 로직 추가 예정)
+        if (viewer.getRemainingCouponCount() <= 0) {
+            throw new GeneralException(ErrorStatus.PROFILE_VIEW_COUPON_REQUIRED);
+        }
+        viewer.decreaseCouponCount();
+
         profileViewRepository.findByViewerAndTarget(viewer, target)
                 .ifPresentOrElse(
                         ProfileView::updateViewedAt,

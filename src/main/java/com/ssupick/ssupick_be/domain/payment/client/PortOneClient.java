@@ -20,6 +20,7 @@ public class PortOneClient {
     private final WebClient webClient;
     private final PortOneProperties portOneProperties;
 
+    // PortOne 기본 API URL을 사용하는 WebClient를 생성합니다.
     @Autowired
     public PortOneClient(PortOneProperties portOneProperties) {
         this(WebClient.builder()
@@ -27,11 +28,13 @@ public class PortOneClient {
                 .build(), portOneProperties);
     }
 
+    // 테스트에서 주입한 WebClient로 PortOneClient를 생성합니다.
     PortOneClient(WebClient webClient, PortOneProperties portOneProperties) {
         this.webClient = webClient;
         this.portOneProperties = portOneProperties;
     }
 
+    // paymentId로 PortOne 결제 단건을 조회합니다.
     public PortOnePaymentResponse getPayment(String paymentId) {
         try {
             PortOnePaymentResponse response = webClient.get()
@@ -56,6 +59,7 @@ public class PortOneClient {
         }
     }
 
+    // PortOne API 에러 응답을 프로젝트 공통 예외로 변환합니다.
     private Mono<Throwable> handleError(HttpStatusCode statusCode, String body) {
         log.error("[PortOne] API 실패 status={}, body={}", statusCode, body);
         if (statusCode == HttpStatus.NOT_FOUND) {

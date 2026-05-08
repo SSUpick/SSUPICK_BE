@@ -51,6 +51,7 @@ public enum ErrorStatus implements BaseStatus {
      */
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "사용자를 찾을 수 없습니다."),
     USER_ONBOARDING_INCOMPLETE(HttpStatus.FORBIDDEN, "USER_403_1", "온보딩을 완료하지 않은 유저입니다."),
+    PROFILE_VIEW_COUPON_REQUIRED(HttpStatus.PAYMENT_REQUIRED, "USER_402_1", "프로필 조회 쿠폰이 부족합니다."),
     ONBOARDING_ALREADY_COMPLETED(HttpStatus.CONFLICT, "USER_409_1", "이미 온보딩을 완료한 유저입니다."),
     INVALID_APPEAL_CONTENT(HttpStatus.BAD_REQUEST, "USER_400_1", "어필 항목 내용이 올바르지 않습니다."),
     SELF_VIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "USER_400_2", "자기 자신의 프로필은 열람할 수 없습니다."),
@@ -70,6 +71,7 @@ public enum ErrorStatus implements BaseStatus {
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404_1", "결제 정보를 찾을 수 없습니다."),
     PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_400_1", "결제 금액이 일치하지 않습니다."),
     PAYMENT_STATUS_INVALID(HttpStatus.BAD_REQUEST, "PAYMENT_400_2", "결제가 완료되지 않았습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "PAYMENT_409_1", "이미 처리된 결제입니다."),
     PORTONE_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "PORTONE_502_1", "포트원 API 요청에 실패했습니다.");
 
     private final HttpStatus httpStatus;
