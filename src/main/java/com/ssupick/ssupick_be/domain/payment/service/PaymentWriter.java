@@ -1,4 +1,4 @@
-package com.ssupick.ssupick_be.domain.payment.repository;
+package com.ssupick.ssupick_be.domain.payment.service;
 
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
@@ -6,6 +6,7 @@ import com.ssupick.ssupick_be.domain.payment.dto.response.PaymentVerifyResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PortOnePaymentResponse;
 import com.ssupick.ssupick_be.domain.payment.entity.Payment;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
+import com.ssupick.ssupick_be.domain.payment.repository.PaymentRepository;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

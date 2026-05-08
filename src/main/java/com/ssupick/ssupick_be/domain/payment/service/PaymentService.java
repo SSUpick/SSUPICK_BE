@@ -8,7 +8,6 @@ import com.ssupick.ssupick_be.domain.payment.dto.response.CouponProductResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PaymentVerifyResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PortOnePaymentResponse;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
-import com.ssupick.ssupick_be.domain.payment.repository.PaymentWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
