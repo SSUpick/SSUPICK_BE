@@ -55,27 +55,28 @@ public class UserService {
                 .orElseGet(() -> userRepository.save(User.createTestUser(testUserId, deviceType)));
     }
 
-    // 상대 유저 프로필 조회 — 자기 자신 열람 방지 + 열람 기록 upsert
+    // 상대 유저 프로필 조회 — 첫 열람만 쿠폰 차감 + 열람 기록 upsert
     @Transactional
     public GetTargetUserProfileResponse getTargetUserProfile(Long viewerId, Long targetId) {
         if (viewerId.equals(targetId)) {
             throw new GeneralException(ErrorStatus.SELF_VIEW_NOT_ALLOWED);
         }
-        User viewer = getUserOrThrow(viewerId);
         User target = getUserOrThrow(targetId);
         if (target.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
         }
-        if (viewer.getRemainingCouponCount() <= 0) {
+
+        int inserted = profileViewRepository.insertIgnoreProfileView(viewerId, targetId);
+        if (inserted == 0) {
+            profileViewRepository.updateViewedAt(viewerId, targetId);
+            return GetTargetUserProfileResponse.from(target);
+        }
+
+        int decreased = userRepository.decreaseCouponCount(viewerId);
+        if (decreased != 1) {
             throw new GeneralException(ErrorStatus.PROFILE_VIEW_COUPON_REQUIRED);
         }
-        viewer.decreaseCouponCount();
 
-        profileViewRepository.findByViewerAndTarget(viewer, target)
-                .ifPresentOrElse(
-                        ProfileView::updateViewedAt,
-                        () -> profileViewRepository.save(new ProfileView(viewer, target))
-                );
         return GetTargetUserProfileResponse.from(target);
     }
 

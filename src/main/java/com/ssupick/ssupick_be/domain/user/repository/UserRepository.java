@@ -22,4 +22,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.remainingCouponCount = u.remainingCouponCount + :count WHERE u.id = :userId")
     int increaseCouponCount(@Param("userId") Long userId, @Param("count") int count);
+
+    // 쿠폰 차감 — 쿠폰이 1개 이상 있을 때만 원자적으로 차감합니다.
+    @Modifying
+    @Query("""
+            UPDATE User u
+            SET u.remainingCouponCount = u.remainingCouponCount - 1
+            WHERE u.id = :userId
+              AND u.remainingCouponCount > 0
+            """)
+    int decreaseCouponCount(@Param("userId") Long userId);
 }
