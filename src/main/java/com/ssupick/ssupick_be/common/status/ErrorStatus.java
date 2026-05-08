@@ -56,6 +56,8 @@ public enum ErrorStatus implements BaseStatus {
     ONBOARDING_ALREADY_COMPLETED(HttpStatus.CONFLICT, "USER_409_1", "이미 온보딩을 완료한 유저입니다."),
     INVALID_APPEAL_CONTENT(HttpStatus.BAD_REQUEST, "USER_400_1", "어필 항목 내용이 올바르지 않습니다."),
     SELF_VIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "USER_400_2", "자기 자신의 프로필은 열람할 수 없습니다."),
+    NICKNAME_PROFANITY_DETECTED(HttpStatus.BAD_REQUEST, "USER_400_3", "닉네임에 사용할 수 없는 표현이 포함되어 있습니다."),
+    APPEAL_PROFANITY_DETECTED(HttpStatus.BAD_REQUEST, "USER_400_4", "어필 항목에 사용할 수 없는 표현이 포함되어 있습니다."),
 
     /**
      * AI Image

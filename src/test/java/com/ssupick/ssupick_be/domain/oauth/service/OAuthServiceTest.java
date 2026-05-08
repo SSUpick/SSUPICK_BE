@@ -48,7 +48,7 @@ class OAuthServiceTest {
     );
 
     private static final KakaoTokenResponse KAKAO_TOKEN = new KakaoTokenResponse(
-            "kakao-access-token", "bearer", 3600, "kakao-refresh-token", 86400
+            "kakao-access-token", "bearer", "kakao-refresh-token", 3600L, 86400L
     );
 
     // 카카오 로그인 성공 시 accessToken, refreshToken, onboardingCompleted가 포함된 응답을 반환합니다.
@@ -58,7 +58,7 @@ class OAuthServiceTest {
         KakaoUserInfoResponse userInfo = new KakaoUserInfoResponse(
                 12345L,
                 new KakaoUserInfoResponse.KakaoAccount("test@test.com",
-                        new KakaoUserInfoResponse.Profile("테스트", "https://profile.jpg"))
+                        new KakaoUserInfoResponse.KakaoAccount.Profile("테스트", "https://profile.jpg"))
         );
 
         when(oAuthKakaoClient.getKakaoToken("auth-code", RedirectType.PROD)).thenReturn(KAKAO_TOKEN);
@@ -84,7 +84,7 @@ class OAuthServiceTest {
         KakaoUserInfoResponse userInfo = new KakaoUserInfoResponse(
                 12345L,
                 new KakaoUserInfoResponse.KakaoAccount("test@test.com",
-                        new KakaoUserInfoResponse.Profile("테스트", "https://profile.jpg"))
+                        new KakaoUserInfoResponse.KakaoAccount.Profile("테스트", "https://profile.jpg"))
         );
 
         when(oAuthKakaoClient.getKakaoToken(any(), any())).thenReturn(KAKAO_TOKEN);
@@ -129,7 +129,7 @@ class OAuthServiceTest {
         KakaoUserInfoResponse userInfo = new KakaoUserInfoResponse(
                 12345L,
                 new KakaoUserInfoResponse.KakaoAccount("test@test.com",
-                        new KakaoUserInfoResponse.Profile("테스트", "https://profile.jpg"))
+                        new KakaoUserInfoResponse.KakaoAccount.Profile("테스트", "https://profile.jpg"))
         );
 
         when(oAuthKakaoClient.getKakaoToken(any(), any())).thenReturn(KAKAO_TOKEN);
