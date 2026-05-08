@@ -73,10 +73,6 @@ public class User extends BaseEntity {
     @Column(name = "appeal3", length = 8)
     private String appeal3;
 
-    @Builder.Default
-    @Column(name = "is_deleted", nullable = false)
-    private boolean deleted = false;
-
     // AI 이미지 생성 잔여 횟수 (최초 3회, 서버에서만 관리)
     @Builder.Default
     @Column(name = "remaining_generation_count", nullable = false)
@@ -99,7 +95,6 @@ public class User extends BaseEntity {
                 .profileUrl(profileUrl)
                 .deviceType(deviceType)
                 .onboardingStatus(OnboardingStatus.INCOMPLETE)
-                .deleted(false)
                 .build();
     }
 
@@ -112,18 +107,7 @@ public class User extends BaseEntity {
                 .name("테스트유저_" + testUserId)
                 .deviceType(deviceType)
                 .onboardingStatus(OnboardingStatus.INCOMPLETE)
-                .deleted(false)
                 .build();
-    }
-
-    // 탈퇴한 유저 재가입 처리 — null이면 기존 값 유지
-    public void restore(String email, String name, String profileUrl, DeviceType deviceType) {
-        if (email != null) this.email = email;
-        if (name != null) this.name = name;
-        if (profileUrl != null) this.profileUrl = profileUrl;
-        this.deviceType = deviceType;
-        this.onboardingStatus = OnboardingStatus.INCOMPLETE;
-        this.deleted = false;
     }
 
     // 온보딩 프로필 등록 — 어필 항목 최대 3개 (인덱스 초과분은 null)
@@ -157,12 +141,6 @@ public class User extends BaseEntity {
 
     // 로그아웃 처리 — 리프레시 토큰 무효화
     public void logout() {
-        this.refreshToken = null;
-    }
-
-    // 회원 탈퇴 처리
-    public void withdraw() {
-        this.deleted = true;
         this.refreshToken = null;
     }
 

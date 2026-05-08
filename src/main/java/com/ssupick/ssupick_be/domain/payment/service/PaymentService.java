@@ -40,7 +40,7 @@ public class PaymentService {
     // PortOne 결제를 검증하고 결제 상품에 해당하는 쿠폰을 충전합니다.
     @Transactional
     public PaymentVerifyResponse verifyPayment(Long userId, String paymentId, PaymentVerifyRequest request) {
-        User user = userRepository.findByIdAndDeletedFalse(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
         CouponProduct couponProduct = request.couponProduct();
 

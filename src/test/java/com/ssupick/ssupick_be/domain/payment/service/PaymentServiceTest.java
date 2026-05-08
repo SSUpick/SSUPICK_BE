@@ -54,7 +54,7 @@ class PaymentServiceTest {
     @Test
     void verifyPayment_chargesCouponWhenStatusIsPaidAndAmountMatchesProduct() {
         User user = User.createTestUser("payment-test-user", DeviceType.IOS);
-        when(userRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(paymentRepository.findByPaymentId("payment-1")).thenReturn(Optional.empty());
         when(paymentRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(portOneClient.getPayment("payment-1"))
@@ -81,7 +81,7 @@ class PaymentServiceTest {
     @Test
     void verifyPayment_throwsWhenPaymentStatusIsNotPaid() {
         User user = User.createTestUser("payment-test-user", DeviceType.IOS);
-        when(userRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(paymentRepository.findByPaymentId("payment-1")).thenReturn(Optional.empty());
         when(portOneClient.getPayment("payment-1"))
                 .thenReturn(new PortOnePaymentResponse(
@@ -102,7 +102,7 @@ class PaymentServiceTest {
     @Test
     void verifyPayment_throwsWhenAmountDoesNotMatch() {
         User user = User.createTestUser("payment-test-user", DeviceType.IOS);
-        when(userRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(paymentRepository.findByPaymentId("payment-1")).thenReturn(Optional.empty());
         when(portOneClient.getPayment("payment-1"))
                 .thenReturn(new PortOnePaymentResponse(
