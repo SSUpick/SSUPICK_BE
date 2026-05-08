@@ -10,12 +10,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 @Slf4j
 @Component
 public class PortOneClient {
+
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(20);
 
     private final WebClient webClient;
     private final PortOneProperties portOneProperties;
@@ -47,7 +52,7 @@ public class PortOneClient {
                                     .flatMap(body -> handleError(r.statusCode(), body))
                     )
                     .bodyToMono(PortOnePaymentResponse.class)
-                    .block();
+                    .block(REQUEST_TIMEOUT);
 
             if (response == null || response.id() == null) {
                 throw new GeneralException(ErrorStatus.PORTONE_REQUEST_FAILED);
@@ -55,6 +60,9 @@ public class PortOneClient {
             return response;
         } catch (WebClientResponseException e) {
             log.error("[PortOne] 결제 조회 실패 status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new GeneralException(ErrorStatus.PORTONE_REQUEST_FAILED);
+        } catch (WebClientRequestException | IllegalStateException e) {
+            log.error("[PortOne] 결제 조회 요청 실패 paymentId={}", paymentId, e);
             throw new GeneralException(ErrorStatus.PORTONE_REQUEST_FAILED);
         }
     }

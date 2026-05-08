@@ -118,7 +118,6 @@ public class PaymentService {
                         }
                       });
 
-                      result.textContent = JSON.stringify({ paymentId, couponProduct, response }, null, 2);
                       console.log("paymentId:", paymentId);
                       console.log("couponProduct:", couponProduct);
                       console.log("response:", response);
@@ -156,8 +155,11 @@ public class PaymentService {
         return value
                 .replace("\\", "\\\\")
                 .replace("\"", "\\\"")
+                .replace("</", "<\\/")
                 .replace("\n", "\\n")
-                .replace("\r", "\\r");
+                .replace("\r", "\\r")
+                .replace("\u2028", "\\u2028")
+                .replace("\u2029", "\\u2029");
     }
 
     private String generatePaymentId(Long userId) {

@@ -31,7 +31,7 @@ public interface PaymentControllerDocs {
     })
     ResponseEntity<ApiResponse<List<CouponProductResponse>>> getCouponProducts();
 
-    @Operation(summary = "결제 HTML 조회", description = "PortOne Browser SDK로 결제창을 여는 테스트용 HTML을 반환합니다.")
+    @Operation(summary = "결제 HTML 생성", description = "READY 결제 기록을 생성하고 PortOne Browser SDK로 결제창을 여는 테스트용 HTML을 반환합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "HTML 반환 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 쿠폰 상품",
@@ -57,13 +57,13 @@ public interface PaymentControllerDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 검증 및 쿠폰 충전 성공",
                     content = @Content(schema = @Schema(implementation = PaymentVerifyResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검사 실패)",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청, 결제 상태 불일치 또는 금액 불일치",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "결제 상태 불일치 또는 금액 불일치",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 처리된 결제",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     ResponseEntity<ApiResponse<PaymentVerifyResponse>> verifyPayment(

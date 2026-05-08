@@ -39,8 +39,8 @@ public class PaymentController implements PaymentControllerDocs {
         return ApiResponse.success(SuccessStatus.COUPON_PRODUCT_LIST_SUCCESS, response);
     }
 
-    // PortOne Browser SDK로 결제창을 여는 HTML을 반환합니다.
-    @GetMapping(value = "/checkout", produces = MediaType.TEXT_HTML_VALUE)
+    // PortOne Browser SDK로 결제창을 여는 HTML을 생성합니다.
+    @PostMapping(value = "/checkout", produces = MediaType.TEXT_HTML_VALUE)
     @Override
     public ResponseEntity<String> getCheckoutPage(
             @AuthenticationPrincipal Long userId,
