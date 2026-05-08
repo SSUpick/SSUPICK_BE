@@ -1,6 +1,7 @@
 package com.ssupick.ssupick_be.domain.user.service;
 
 import com.ssupick.ssupick_be.common.exception.GeneralException;
+import com.ssupick.ssupick_be.common.filter.ProfanityFilter;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
@@ -25,6 +26,7 @@ public class UserService {
     private final AiImageService aiImageService;
     private final UserRepository userRepository;
     private final ProfileViewRepository profileViewRepository;
+    private final ProfanityFilter profanityFilter;
 
     // ───────────────────────────── 공통 내부 헬퍼 ─────────────────────────────
 
@@ -103,6 +105,8 @@ public class UserService {
         if (request.appeals() == null || request.appeals().stream().anyMatch(a -> a == null || a.isBlank())) {
             throw new GeneralException(ErrorStatus.INVALID_APPEAL_CONTENT);
         }
+        profanityFilter.validateNickname(request.nickname());
+        profanityFilter.validateAppeals(request.appeals());
         user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals(), request.gender());
     }
 
@@ -147,6 +151,8 @@ public class UserService {
         if (user.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
         }
+        profanityFilter.validateNickname(request.nickname());
+        profanityFilter.validateAppeals(request.appeals());
         user.updateProfile(request.toCommand());
     }
 

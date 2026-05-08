@@ -4,6 +4,7 @@ import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.oauth.dto.KakaoTokenResponse;
 import com.ssupick.ssupick_be.domain.oauth.dto.KakaoUserInfoResponse;
+import com.ssupick.ssupick_be.domain.oauth.enums.RedirectType;
 import com.ssupick.ssupick_be.domain.oauth.properties.KakaoProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,17 +28,17 @@ public class OAuthKakaoClient {
     private final KakaoProperties kakaoProperties;
 
     // 인가 코드 -> 카카오 액세스 토큰
-    public KakaoTokenResponse getKakaoToken(String code) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "authorization_code");
-        form.add("client_id", kakaoProperties.clientId());
-        form.add("redirect_uri", kakaoProperties.redirectUri());
-        form.add("code", code);
-        if (StringUtils.hasText(kakaoProperties.clientSecret())) {
-            form.add("client_secret", kakaoProperties.clientSecret());
-        }
-
+    public KakaoTokenResponse getKakaoToken(String code, RedirectType redirectType) {
         try {
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("grant_type", "authorization_code");
+            form.add("client_id", kakaoProperties.clientId());
+            form.add("redirect_uri", kakaoProperties.resolvedRedirectUri(redirectType));
+            form.add("code", code);
+            if (StringUtils.hasText(kakaoProperties.clientSecret())) {
+                form.add("client_secret", kakaoProperties.clientSecret());
+            }
+
             KakaoTokenResponse response = kakaoAuthWebClient.post()
                     .uri("/oauth/token")
                     .body(BodyInserters.fromFormData(form))
@@ -56,6 +57,9 @@ public class OAuthKakaoClient {
             return response;
         } catch (WebClientResponseException e) {
             log.error("[*] 카카오 토큰 발급 실패 status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new GeneralException(ErrorStatus.KAKAO_TOKEN_REQUEST_FAILED);
+        } catch (IllegalStateException e) {
+            log.error("[*] 카카오 redirect_uri 설정 오류 redirectType={}", redirectType, e);
             throw new GeneralException(ErrorStatus.KAKAO_TOKEN_REQUEST_FAILED);
         }
     }

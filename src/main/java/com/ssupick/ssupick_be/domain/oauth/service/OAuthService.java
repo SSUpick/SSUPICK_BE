@@ -9,11 +9,11 @@ import com.ssupick.ssupick_be.domain.oauth.dto.KakaoUserInfoResponse;
 import com.ssupick.ssupick_be.domain.oauth.dto.request.OAuthKakaoLoginRequest;
 import com.ssupick.ssupick_be.domain.oauth.dto.response.OAuthLoginResponse;
 import com.ssupick.ssupick_be.domain.user.entity.User;
+import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -25,9 +25,11 @@ public class OAuthService {
     private final OAuthKakaoClient oAuthKakaoClient;
     private final AiImageRepository aiImageRepository;
 
-    @Transactional
+    // 외부 API 호출은 트랜잭션 밖에서 수행합니다.
+    // DB 작업은 UserService.findOrRegisterKakaoUser의 @Transactional에 위임합니다.
     public OAuthLoginResponse kakaoLogin(OAuthKakaoLoginRequest request) {
-        KakaoTokenResponse kakaoToken = oAuthKakaoClient.getKakaoToken(request.code());
+        // 트랜잭션 밖: 카카오 외부 API 호출
+        KakaoTokenResponse kakaoToken = oAuthKakaoClient.getKakaoToken(request.code(), request.redirectType());
         KakaoUserInfoResponse userInfo = oAuthKakaoClient.getKakaoUserInfo(kakaoToken.accessToken());
 
         String kakaoId = userInfo.id().toString();
@@ -35,11 +37,17 @@ public class OAuthService {
         String name = userInfo.extractNickname();
         String profileUrl = userInfo.extractProfileImageUrl();
 
-        User user = userService.findOrRegisterKakaoUser(kakaoId, email, name, profileUrl, request.deviceType());
+        // 트랜잭션 안: 유저 조회/등록 + 토큰 발급
+        return processLogin(kakaoId, email, name, profileUrl, request.deviceType());
+    }
 
+    // 유저 조회/등록 + JWT 발급을 하나의 트랜잭션으로 처리합니다.
+    private OAuthLoginResponse processLogin(
+            String kakaoId, String email, String name, String profileUrl, DeviceType deviceType
+    ) {
+        User user = userService.findOrRegisterKakaoUser(kakaoId, email, name, profileUrl, deviceType);
         TokenIssuance tokens = jwtService.issueTokens(user);
         boolean aiImageGenerated = aiImageRepository.existsByUserAndSelectedTrue(user);
-
         return OAuthLoginResponse.of(user, tokens.accessToken(), tokens.refreshToken(), aiImageGenerated);
     }
 }
