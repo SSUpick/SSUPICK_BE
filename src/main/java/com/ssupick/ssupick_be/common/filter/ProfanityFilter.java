@@ -7,11 +7,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-// BadWordFiltering은 내부 가변 상태가 없어 thread-safe합니다. @Component 싱글톤으로 안전하게 공유됩니다.
 @Component
 public class ProfanityFilter {
-
-    private final BadWordFiltering badWordFiltering = new BadWordFiltering();
 
     // 닉네임에 비속어 또는 띄어쓰기 우회 비속어가 포함되어 있으면 예외를 던집니다.
     public void validateNickname(String nickname) {
@@ -32,6 +29,7 @@ public class ProfanityFilter {
     }
 
     private boolean containsProfanity(String text) {
+        BadWordFiltering badWordFiltering = new BadWordFiltering();
         return badWordFiltering.check(text) || badWordFiltering.blankCheck(text);
     }
 }
