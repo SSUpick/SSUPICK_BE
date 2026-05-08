@@ -62,7 +62,7 @@ public class GeminiAsyncProcessor {
             aiImageRepository.findById(aiImageId).ifPresent(AiImage::markFailed);
 
             // 생성 실패 시 차감된 횟수 복구
-            userRepository.findByIdAndDeletedFalse(userId).ifPresent(user -> {
+            userRepository.findById(userId).ifPresent(user -> {
                 user.restoreGenerationCount();
                 log.info("[Gemini] 횟수 복구 - userId: {}", userId);
             });

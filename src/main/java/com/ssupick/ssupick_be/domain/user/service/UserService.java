@@ -6,7 +6,6 @@ import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
-import com.ssupick.ssupick_be.domain.user.entity.ProfileView;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
@@ -35,25 +34,14 @@ public class UserService {
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
     }
 
-    // userId로 활성 유저 조회 — 탈퇴 유저 자동 차단 (내부 전용)
-    private User getActiveUserOrThrow(Long userId) {
-        return userRepository.findByIdAndDeletedFalse(userId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
-    }
-
     // ───────────────────────────── Public API ─────────────────────────────────
 
-    // 카카오 유저 조회 후 없으면 신규 생성, 탈퇴 유저면 복구
+    // 카카오 유저 조회 후 없으면 신규 생성
     @Transactional
     public User findOrRegisterKakaoUser(
             String kakaoId, String email, String name, String profileUrl, DeviceType deviceType
     ) {
         return userRepository.findByOauthIdAndOauthProvider(kakaoId, OAuthProvider.KAKAO)
-                .map(user -> {
-                    if (user.isDeleted())
-                        user.restore(email, name, profileUrl, deviceType);
-                    return user;
-                })
                 .orElseGet(() ->
                         userRepository.save(User.createKakaoUser(kakaoId, email, name, profileUrl, deviceType))
                 );
@@ -66,36 +54,49 @@ public class UserService {
                 .orElseGet(() -> userRepository.save(User.createTestUser(testUserId, deviceType)));
     }
 
-    // 상대 유저 프로필 조회 — 자기 자신 열람 방지 + 열람 기록 upsert
+    // 상대 유저 프로필 조회 — 첫 열람만 쿠폰 차감 + 열람 기록 upsert
     @Transactional
     public GetTargetUserProfileResponse getTargetUserProfile(Long viewerId, Long targetId) {
         if (viewerId.equals(targetId)) {
             throw new GeneralException(ErrorStatus.SELF_VIEW_NOT_ALLOWED);
         }
-        User viewer = getActiveUserOrThrow(viewerId);
-        User target = getActiveUserOrThrow(targetId);
+
+        // 프로필 등록 여부 검사
+        User viewer = getUserOrThrow(viewerId);
+        if (viewer.getProfileUrl() == null || viewer.getProfileUrl().isBlank()) {
+            throw new GeneralException(ErrorStatus.USER_PROFILE_INCOMPLETE);
+        }
+
+        // 온보딩 완료 여부 검사
+        User target = getUserOrThrow(targetId);
         if (target.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
         }
-        // (추후 쿠폰 차감 로직 추가 예정)
-        profileViewRepository.findByViewerAndTarget(viewer, target)
-                .ifPresentOrElse(
-                        ProfileView::updateViewedAt,
-                        () -> profileViewRepository.save(new ProfileView(viewer, target))
-                );
+
+        int inserted = profileViewRepository.insertIgnoreProfileView(viewerId, targetId);
+        if (inserted == 0) {
+            profileViewRepository.updateViewedAt(viewerId, targetId);
+            return GetTargetUserProfileResponse.from(target);
+        }
+
+        int decreased = userRepository.decreaseCouponCount(viewerId);
+        if (decreased != 1) {
+            throw new GeneralException(ErrorStatus.PROFILE_VIEW_COUPON_REQUIRED);
+        }
+
         return GetTargetUserProfileResponse.from(target);
     }
 
     // 유저 프로필 조회 — Controller에 Entity 노출 방지
     @Transactional(readOnly = true)
     public GetUserProfileResponse getUserProfile(Long userId) {
-        return GetUserProfileResponse.from(getActiveUserOrThrow(userId));
+        return GetUserProfileResponse.from(getUserOrThrow(userId));
     }
 
     // 온보딩 프로필 등록 — 중복 등록 방어 + appeals 이중 방어
     @Transactional
     public void registerUserOnboarding(Long userId, RegisterUserOnboardingRequest request) {
-        User user = getActiveUserOrThrow(userId);
+        User user = getUserOrThrow(userId);
         if (user.getOnboardingStatus() == OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.ONBOARDING_ALREADY_COMPLETED);
         }
@@ -105,10 +106,17 @@ public class UserService {
         user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals(), request.gender());
     }
 
-    // 유저 카드 리스트 조회 — 온보딩 완료 유저, 본인 제외
+    // 유저 카드 리스트 조회 — 비인증 요청이면 전체 반환, 인증 요청이면 본인 제외
     @Transactional(readOnly = true)
     public List<GetUserCardResponse> getUserCardList(Long userId) {
-        return userRepository.findAllByOnboardingStatusAndDeletedFalseAndIdNot(
+        if (userId == null) {
+            return userRepository.findAllByOnboardingStatus(OnboardingStatus.COMPLETED)
+                    .stream()
+                    .map(GetUserCardResponse::from)
+                    .toList();
+        }
+
+        return userRepository.findAllByOnboardingStatusAndIdNot(
                         OnboardingStatus.COMPLETED, userId)
                 .stream()
                 .map(GetUserCardResponse::from)
@@ -118,7 +126,7 @@ public class UserService {
     // 내가 열람한 / 나를 열람한 유저 목록 통합 조회 — 최신순
     @Transactional(readOnly = true)
     public GetProfileViewListResponse getProfileViewList(Long userId) {
-        User user = getActiveUserOrThrow(userId);
+        User user = getUserOrThrow(userId);
         // 내가 열람한 사람 목록
         List<GetUserViewResponse> viewedUsers = profileViewRepository.findByViewerOrderByViewedAtDesc(user)
                 .stream()
@@ -135,7 +143,7 @@ public class UserService {
     // 마이페이지 프로필 수정 — 온보딩 완료 유저만 수정 가능
     @Transactional
     public void updateUserProfile(Long userId, UpdateUserProfileRequest request) {
-        User user = getActiveUserOrThrow(userId);
+        User user = getUserOrThrow(userId);
         if (user.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
         }
@@ -143,12 +151,12 @@ public class UserService {
     }
 
     // AuthService 전용 — logout/withdraw/reissue 시 사용
-    // 탈퇴 유저도 조회 가능해야 하므로 의도적으로 deletedFalse 미적용
     @Transactional
     public User findByIdForUpdate(Long userId) {
         return getUserOrThrow(userId);
     }
 
+    // 회원 탈퇴 시 관련 데이터를 정리하고 유저를 hard delete 합니다.
     public void withdraw(Long userId) {
         User user = getUserOrThrow(userId);
         aiImageService.deleteByUser(user);

@@ -149,7 +149,7 @@ public class AiImageService {
     // ── private 헬퍼 ──────────────────────────────────────────────────────────
 
     private User getActiveUserOrThrow(Long userId) {
-        return userRepository.findByIdAndDeletedFalse(userId)
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
     }
 
