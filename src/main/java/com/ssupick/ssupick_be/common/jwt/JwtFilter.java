@@ -31,7 +31,9 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
 
-    // SecurityConfig의 permitAll 경로와 동일하게 맞춰줍니다
+    // SecurityConfig의 permitAll 경로와 동일하게 맞춰줍니다.
+    // USER_URIS는 의도적으로 제외 — 토큰이 있으면 userId를 추출하고, 없으면 null로 처리합니다.
+    // (비인증 요청도 허용하되, 인증된 경우 본인 제외 로직을 적용하기 위함)
     private static final List<PathPatternRequestMatcher> EXCLUDED_PATHS =
             Stream.of(SecurityConfig.SWAGGER_URIS, SecurityConfig.OAUTH_URIS, SecurityConfig.AUTH_URIS)
                     .flatMap(Arrays::stream)

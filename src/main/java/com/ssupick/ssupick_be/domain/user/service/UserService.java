@@ -6,7 +6,6 @@ import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
-import com.ssupick.ssupick_be.domain.user.entity.ProfileView;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
@@ -99,9 +98,16 @@ public class UserService {
         user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals(), request.gender());
     }
 
-    // 유저 카드 리스트 조회 — 온보딩 완료 유저, 본인 제외
+    // 유저 카드 리스트 조회 — 비인증 요청이면 전체 반환, 인증 요청이면 본인 제외
     @Transactional(readOnly = true)
     public List<GetUserCardResponse> getUserCardList(Long userId) {
+        if (userId == null) {
+            return userRepository.findAllByOnboardingStatus(OnboardingStatus.COMPLETED)
+                    .stream()
+                    .map(GetUserCardResponse::from)
+                    .toList();
+        }
+
         return userRepository.findAllByOnboardingStatusAndIdNot(
                         OnboardingStatus.COMPLETED, userId)
                 .stream()
