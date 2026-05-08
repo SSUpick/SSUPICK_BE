@@ -60,6 +60,14 @@ public class UserService {
         if (viewerId.equals(targetId)) {
             throw new GeneralException(ErrorStatus.SELF_VIEW_NOT_ALLOWED);
         }
+
+        // 프로필 등록 여부 검사
+        User viewer = getUserOrThrow(viewerId);
+        if (viewer.getProfileUrl() == null || viewer.getProfileUrl().isBlank()) {
+            throw new GeneralException(ErrorStatus.USER_PROFILE_INCOMPLETE);
+        }
+
+        // 온보딩 완료 여부 검사
         User target = getUserOrThrow(targetId);
         if (target.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
