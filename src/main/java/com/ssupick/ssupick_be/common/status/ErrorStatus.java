@@ -62,7 +62,15 @@ public enum ErrorStatus implements BaseStatus {
     AI_IMAGE_GENERATION_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AI_429_1", "이미지 생성 횟수를 모두 사용했습니다."),
     AI_IMAGE_NOT_OWNED(HttpStatus.FORBIDDEN, "AI_403_1", "해당 이미지에 대한 권한이 없습니다."),
     AI_IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI_500_1", "이미지 업로드에 실패했습니다."),
-    AI_IMAGE_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI 이미지 생성에 실패했습니다.");
+    AI_IMAGE_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI 이미지 생성에 실패했습니다."),
+
+    /**
+     * Payment
+     */
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404_1", "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_400_1", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_STATUS_INVALID(HttpStatus.BAD_REQUEST, "PAYMENT_400_2", "결제가 완료되지 않았습니다."),
+    PORTONE_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "PORTONE_502_1", "포트원 API 요청에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

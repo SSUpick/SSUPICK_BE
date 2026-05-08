@@ -40,7 +40,12 @@ public enum SuccessStatus implements BaseStatus {
      */
     AI_IMAGE_GENERATE_SUCCESS(HttpStatus.OK, "AI_200_1", "AI 이미지 생성에 성공했습니다."),
     AI_IMAGE_LIST_SUCCESS(HttpStatus.OK, "AI_200_2", "AI 이미지 목록 조회에 성공했습니다."),
-    AI_IMAGE_SELECT_SUCCESS(HttpStatus.OK, "AI_200_3", "프로필 이미지 확정에 성공했습니다.");
+    AI_IMAGE_SELECT_SUCCESS(HttpStatus.OK, "AI_200_3", "프로필 이미지 확정에 성공했습니다."),
+
+    /**
+     * Payment
+     */
+    PAYMENT_VERIFY_SUCCESS(HttpStatus.OK, "PAYMENT_200_1", "결제 검증에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
