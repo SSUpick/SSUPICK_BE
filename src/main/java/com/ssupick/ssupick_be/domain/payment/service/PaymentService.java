@@ -9,6 +9,7 @@ import com.ssupick.ssupick_be.domain.payment.dto.response.PaymentVerifyResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PortOnePaymentResponse;
 import com.ssupick.ssupick_be.domain.payment.entity.Payment;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
+import com.ssupick.ssupick_be.domain.payment.enums.PaymentStatus;
 import com.ssupick.ssupick_be.domain.payment.properties.PortOneProperties;
 import com.ssupick.ssupick_be.domain.payment.repository.PaymentRepository;
 import com.ssupick.ssupick_be.domain.user.entity.User;
@@ -46,9 +47,9 @@ public class PaymentService {
     public PaymentVerifyResponse verifyPayment(Long userId, String paymentId, PaymentVerifyRequest request) {
         CouponProduct couponProduct = request.couponProduct();
 
-        // 1. DB에서 기존 결제 확인 — 있으면 PortOne 호출 없이 바로 반환합니다.
+        // 1. DB에서 기존 결제 확인 — 이미 PAID면 PortOne 호출 없이 멱등 성공으로 반환합니다.
         Optional<Payment> existingPayment = paymentRepository.findByPaymentIdAndUserId(paymentId, userId);
-        if (existingPayment.isPresent()) {
+        if (existingPayment.isPresent() && existingPayment.get().getStatus() == PaymentStatus.PAID) {
             Payment payment = existingPayment.get();
             int remainingCouponCount = userRepository.findById(userId)
                     .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND))
