@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: prodㅎ
+    active: prod
 
 springdoc:
   swagger-ui:
