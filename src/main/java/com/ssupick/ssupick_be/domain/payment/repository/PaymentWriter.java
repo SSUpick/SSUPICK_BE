@@ -9,7 +9,6 @@ import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +19,8 @@ public class PaymentWriter {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
 
-    // DB 반영만 담당하는 짧은 트랜잭션 — 외부 API 호출 없이 저장 + 쿠폰 충전만 수행합니다.
+    // 외부 API 호출 없이 DB 저장 + 쿠폰 충전만 수행하는 짧은 트랜잭션입니다.
+    // INSERT IGNORE로 중복 요청을 예외 없이 처리하고, affected row로 신규/중복 여부를 판단합니다.
     @Transactional
     public PaymentVerifyResponse completePayment(
             Long userId,
@@ -28,14 +28,25 @@ public class PaymentWriter {
             CouponProduct couponProduct,
             PortOnePaymentResponse payment
     ) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+        Long actualAmount = payment.amount() != null ? payment.amount().total() : null;
 
-        Payment existingPayment = paymentRepository.findByPaymentId(paymentId).orElse(null);
-        if (existingPayment != null) {
-            if (!existingPayment.getUser().getId().equals(userId)) {
-                throw new GeneralException(ErrorStatus.PAYMENT_ALREADY_PROCESSED);
-            }
+        int inserted = paymentRepository.insertIgnorePaidPayment(
+                paymentId,
+                userId,
+                couponProduct.name(),
+                actualAmount,
+                couponProduct.getCouponCount()
+        );
+
+        // 중복 요청 — 소유자 검증 후 기존 결제 결과를 반환합니다.
+        if (inserted == 0) {
+            // paymentId + userId로 조회 — 없으면 다른 유저의 결제이므로 거부합니다.
+            Payment existingPayment = paymentRepository.findByPaymentIdAndUserId(paymentId, userId)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus.PAYMENT_ALREADY_PROCESSED));
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+
             return new PaymentVerifyResponse(
                     existingPayment.getPaymentId(),
                     existingPayment.getStatus().name(),
@@ -45,17 +56,14 @@ public class PaymentWriter {
             );
         }
 
-        Long actualAmount = payment.amount() != null ? payment.amount().total() : null;
-
-        // 1. 결제 기록을 먼저 저장합니다. paymentId 중복 시 PAYMENT_ALREADY_PROCESSED 예외가 발생합니다.
-        try {
-            paymentRepository.saveAndFlush(Payment.paid(paymentId, user, couponProduct, actualAmount));
-        } catch (DataIntegrityViolationException e) {
-            throw new GeneralException(ErrorStatus.PAYMENT_ALREADY_PROCESSED);
+        // 신규 요청 — 쿠폰을 충전하고 결과를 반환합니다.
+        int updated = userRepository.increaseCouponCount(userId, couponProduct.getCouponCount());
+        if (updated != 1) {
+            throw new GeneralException(ErrorStatus.USER_NOT_FOUND);
         }
 
-        // 2. 저장에 성공한 요청만 쿠폰을 충전합니다.
-        user.increaseCouponCount(couponProduct.getCouponCount());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
 
         return PaymentVerifyResponse.from(
                 payment,

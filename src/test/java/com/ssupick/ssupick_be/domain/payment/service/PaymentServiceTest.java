@@ -8,10 +8,7 @@ import com.ssupick.ssupick_be.domain.payment.dto.response.CouponProductResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PaymentVerifyResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PortOnePaymentResponse;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
-import com.ssupick.ssupick_be.domain.payment.repository.PaymentRepository;
-import com.ssupick.ssupick_be.domain.user.entity.User;
-import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
-import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
+import com.ssupick.ssupick_be.domain.payment.repository.PaymentWriter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,11 +16,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,14 +32,12 @@ class PaymentServiceTest {
     private PortOneClient portOneClient;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private PaymentRepository paymentRepository;
+    private PaymentWriter paymentWriter;
 
     @InjectMocks
     private PaymentService paymentService;
 
+    // 쿠폰 상품 목록이 서버에 정의된 순서대로 반환되는지 검증합니다.
     @Test
     void getCouponProducts_returnsServerDefinedProducts() {
         List<CouponProductResponse> response = paymentService.getCouponProducts();
@@ -51,72 +48,59 @@ class PaymentServiceTest {
                 .containsExactly(1000L, 3000L, 5000L);
     }
 
+    // PortOne 결제 상태가 PAID이고 금액이 일치하면 PaymentWriter.completePayment를 호출합니다.
     @Test
-    void verifyPayment_chargesCouponWhenStatusIsPaidAndAmountMatchesProduct() {
-        User user = User.createTestUser("payment-test-user", DeviceType.IOS);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(paymentRepository.findByPaymentId("payment-1")).thenReturn(Optional.empty());
-        when(paymentRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(portOneClient.getPayment("payment-1"))
-                .thenReturn(new PortOnePaymentResponse(
-                        "payment-1",
-                        "PAID",
-                        new PortOnePaymentResponse.Amount(3000L)
-                ));
+    void verifyPayment_delegatesToPaymentWriterWhenValidPayment() {
+        PortOnePaymentResponse portOneResponse = new PortOnePaymentResponse(
+                "payment-1",
+                "PAID",
+                new PortOnePaymentResponse.Amount(3000L)
+        );
+        PaymentVerifyResponse expected = new PaymentVerifyResponse("payment-1", "PAID", 3000L, 4, 4);
+
+        when(portOneClient.getPayment("payment-1")).thenReturn(portOneResponse);
+        when(paymentWriter.completePayment(1L, "payment-1", CouponProduct.COUPON_4, portOneResponse))
+                .thenReturn(expected);
 
         PaymentVerifyResponse response = paymentService.verifyPayment(
-                1L,
-                "payment-1",
-                new PaymentVerifyRequest(CouponProduct.COUPON_4)
+                1L, "payment-1", new PaymentVerifyRequest(CouponProduct.COUPON_4)
         );
 
-        assertThat(response.paymentId()).isEqualTo("payment-1");
-        assertThat(response.status()).isEqualTo("PAID");
-        assertThat(response.totalAmount()).isEqualTo(3000L);
-        assertThat(response.chargedCouponCount()).isEqualTo(4);
-        assertThat(response.remainingCouponCount()).isEqualTo(4);
-        assertThat(user.getRemainingCouponCount()).isEqualTo(4);
+        assertThat(response).isEqualTo(expected);
+        verify(paymentWriter).completePayment(1L, "payment-1", CouponProduct.COUPON_4, portOneResponse);
     }
 
+    // PortOne 결제 상태가 PAID가 아니면 예외를 던지고 PaymentWriter를 호출하지 않습니다.
     @Test
     void verifyPayment_throwsWhenPaymentStatusIsNotPaid() {
-        User user = User.createTestUser("payment-test-user", DeviceType.IOS);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(paymentRepository.findByPaymentId("payment-1")).thenReturn(Optional.empty());
         when(portOneClient.getPayment("payment-1"))
                 .thenReturn(new PortOnePaymentResponse(
-                        "payment-1",
-                        "READY",
-                        new PortOnePaymentResponse.Amount(4900L)
+                        "payment-1", "READY", new PortOnePaymentResponse.Amount(1000L)
                 ));
 
         assertThatThrownBy(() -> paymentService.verifyPayment(
-                1L,
-                "payment-1",
-                new PaymentVerifyRequest(CouponProduct.COUPON_1)
+                1L, "payment-1", new PaymentVerifyRequest(CouponProduct.COUPON_1)
         ))
                 .isInstanceOfSatisfying(GeneralException.class, e ->
                         assertThat(e.getErrorStatus()).isEqualTo(ErrorStatus.PAYMENT_STATUS_INVALID));
+
+        verify(paymentWriter, never()).completePayment(any(), any(), any(), any());
     }
 
+    // 금액이 상품 가격과 다르면 예외를 던지고 PaymentWriter를 호출하지 않습니다.
     @Test
     void verifyPayment_throwsWhenAmountDoesNotMatch() {
-        User user = User.createTestUser("payment-test-user", DeviceType.IOS);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(paymentRepository.findByPaymentId("payment-1")).thenReturn(Optional.empty());
         when(portOneClient.getPayment("payment-1"))
                 .thenReturn(new PortOnePaymentResponse(
-                        "payment-1",
-                        "PAID",
-                        new PortOnePaymentResponse.Amount(4900L)
+                        "payment-1", "PAID", new PortOnePaymentResponse.Amount(9999L)
                 ));
 
         assertThatThrownBy(() -> paymentService.verifyPayment(
-                1L,
-                "payment-1",
-                new PaymentVerifyRequest(CouponProduct.COUPON_8)
+                1L, "payment-1", new PaymentVerifyRequest(CouponProduct.COUPON_8)
         ))
                 .isInstanceOfSatisfying(GeneralException.class, e ->
                         assertThat(e.getErrorStatus()).isEqualTo(ErrorStatus.PAYMENT_AMOUNT_MISMATCH));
+
+        verify(paymentWriter, never()).completePayment(any(), any(), any(), any());
     }
 }

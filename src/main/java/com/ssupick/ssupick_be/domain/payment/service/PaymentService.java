@@ -33,15 +33,12 @@ public class PaymentService {
                 .toList();
     }
 
-    // PortOne 결제 검증 후 DB 반영을 PaymentWriter에 위임합니다.
-    // 외부 API 호출은 트랜잭션 밖에서 수행합니다.
+    // 외부 API 호출과 검증은 트랜잭션 밖에서 수행하고, DB 반영은 PaymentWriter에 위임합니다.
     public PaymentVerifyResponse verifyPayment(Long userId, String paymentId, PaymentVerifyRequest request) {
         CouponProduct couponProduct = request.couponProduct();
 
-        // 트랜잭션 밖: PortOne 외부 API 호출
+        // 트랜잭션 밖: PortOne 외부 API 호출 + 순수 검증
         PortOnePaymentResponse payment = portOneClient.getPayment(paymentId);
-
-        // 트랜잭션 밖: 순수 검증
         validatePayment(payment, couponProduct);
 
         // 트랜잭션 안: DB 저장 + 쿠폰 충전
