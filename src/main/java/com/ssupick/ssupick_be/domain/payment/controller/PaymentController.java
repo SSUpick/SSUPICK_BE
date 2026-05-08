@@ -6,9 +6,11 @@ import com.ssupick.ssupick_be.domain.payment.controller.docs.PaymentControllerDo
 import com.ssupick.ssupick_be.domain.payment.dto.request.PaymentVerifyRequest;
 import com.ssupick.ssupick_be.domain.payment.dto.response.CouponProductResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PaymentVerifyResponse;
+import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
 import com.ssupick.ssupick_be.domain.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +18,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -34,6 +38,20 @@ public class PaymentController implements PaymentControllerDocs {
         List<CouponProductResponse> response = paymentService.getCouponProducts();
         return ApiResponse.success(SuccessStatus.COUPON_PRODUCT_LIST_SUCCESS, response);
     }
+
+    // PortOne Browser SDK로 결제창을 여는 HTML을 반환합니다.
+    @GetMapping(value = "/checkout", produces = MediaType.TEXT_HTML_VALUE)
+    @Override
+    public ResponseEntity<String> getCheckoutPage(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam CouponProduct couponProduct
+    ) {
+        String html = paymentService.buildCheckoutHtml(userId, couponProduct);
+        return ResponseEntity.ok()
+                .contentType(new MediaType("text", "html", StandardCharsets.UTF_8))
+                .body(html);
+    }
+
 
     // 결제 완료 후 PortOne 결제 정보를 검증하고 쿠폰을 충전합니다.
     @PostMapping("/{paymentId}/verify")

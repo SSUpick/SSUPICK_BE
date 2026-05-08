@@ -43,13 +43,13 @@ class PaymentWriterTest {
             "payment-1", "PAID", new PortOnePaymentResponse.Amount(3000L)
     );
 
-    // INSERT IGNORE 성공(inserted=1) 시 쿠폰이 충전되고 올바른 응답이 반환되는지 검증합니다.
+    // READY -> PAID 전환 성공 시 쿠폰이 충전되고 올바른 응답이 반환되는지 검증합니다.
     @Test
-    void completePayment_chargesCouponWhenInsertSucceeds() {
+    void completePayment_chargesCouponWhenMarkPaidSucceeds() {
         User user = User.createTestUser("test-user", DeviceType.IOS);
 
-        when(paymentRepository.insertIgnorePaidPayment(
-                "payment-1", 1L, "COUPON_4", 3000L, 4
+        when(paymentRepository.markReadyPaymentAsPaid(
+                "payment-1", 1L, CouponProduct.COUPON_4, 3000L, 4, PaymentStatus.READY, PaymentStatus.PAID
         )).thenReturn(1);
         when(userRepository.increaseCouponCount(1L, 4)).thenReturn(1);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -65,11 +65,11 @@ class PaymentWriterTest {
         verify(userRepository).increaseCouponCount(1L, 4);
     }
 
-    // insert 성공 후 쿠폰 증가 update가 0을 반환하면 USER_NOT_FOUND 예외를 던집니다.
+    // PAID 전환 성공 후 쿠폰 증가 update가 0을 반환하면 USER_NOT_FOUND 예외를 던집니다.
     @Test
     void completePayment_throwsWhenCouponUpdateReturnsZero() {
-        when(paymentRepository.insertIgnorePaidPayment(
-                "payment-1", 1L, "COUPON_4", 3000L, 4
+        when(paymentRepository.markReadyPaymentAsPaid(
+                "payment-1", 1L, CouponProduct.COUPON_4, 3000L, 4, PaymentStatus.READY, PaymentStatus.PAID
         )).thenReturn(1);
         when(userRepository.increaseCouponCount(1L, 4)).thenReturn(0);
 
@@ -80,14 +80,14 @@ class PaymentWriterTest {
                         assertThat(e.getErrorStatus()).isEqualTo(ErrorStatus.USER_NOT_FOUND));
     }
 
-    // INSERT IGNORE 실패(inserted=0) 시 소유자 검증 후 기존 결제 결과를 반환하는지 검증합니다.
+    // PAID 전환 실패 시 이미 PAID인 결제라면 기존 결제 결과를 반환하는지 검증합니다.
     @Test
-    void completePayment_returnsExistingPaymentWhenInsertIgnored() {
+    void completePayment_returnsExistingPaymentWhenAlreadyPaid() {
         User user = User.createTestUser("test-user", DeviceType.IOS);
         Payment existingPayment = Payment.paid("payment-1", user, CouponProduct.COUPON_4, 3000L);
 
-        when(paymentRepository.insertIgnorePaidPayment(
-                "payment-1", 1L, "COUPON_4", 3000L, 4
+        when(paymentRepository.markReadyPaymentAsPaid(
+                "payment-1", 1L, CouponProduct.COUPON_4, 3000L, 4, PaymentStatus.READY, PaymentStatus.PAID
         )).thenReturn(0);
         when(paymentRepository.findByPaymentIdAndUserId("payment-1", 1L))
                 .thenReturn(Optional.of(existingPayment));
@@ -103,11 +103,11 @@ class PaymentWriterTest {
         verify(userRepository, never()).increaseCouponCount(anyLong(), anyInt());
     }
 
-    // INSERT IGNORE 실패 시 다른 유저의 paymentId로 요청하면 PAYMENT_ALREADY_PROCESSED 예외를 던집니다.
+    // PAID 전환 실패 시 다른 유저의 paymentId로 요청하면 PAYMENT_ALREADY_PROCESSED 예외를 던집니다.
     @Test
-    void completePayment_throwsWhenInsertIgnoredByDifferentUser() {
-        when(paymentRepository.insertIgnorePaidPayment(
-                "payment-1", 2L, "COUPON_4", 3000L, 4
+    void completePayment_throwsWhenPaymentBelongsToDifferentUser() {
+        when(paymentRepository.markReadyPaymentAsPaid(
+                "payment-1", 2L, CouponProduct.COUPON_4, 3000L, 4, PaymentStatus.READY, PaymentStatus.PAID
         )).thenReturn(0);
         when(paymentRepository.findByPaymentIdAndUserId("payment-1", 2L))
                 .thenReturn(Optional.empty());
@@ -121,11 +121,11 @@ class PaymentWriterTest {
         verify(userRepository, never()).increaseCouponCount(anyLong(), anyInt());
     }
 
-    // INSERT IGNORE 실패 시 payment 기록 자체가 없으면 PAYMENT_ALREADY_PROCESSED 예외를 던집니다.
+    // PAID 전환 실패 시 payment 기록 자체가 없으면 PAYMENT_ALREADY_PROCESSED 예외를 던집니다.
     @Test
-    void completePayment_throwsWhenInsertIgnoredButPaymentNotFound() {
-        when(paymentRepository.insertIgnorePaidPayment(
-                "payment-1", 1L, "COUPON_4", 3000L, 4
+    void completePayment_throwsWhenPaymentNotFound() {
+        when(paymentRepository.markReadyPaymentAsPaid(
+                "payment-1", 1L, CouponProduct.COUPON_4, 3000L, 4, PaymentStatus.READY, PaymentStatus.PAID
         )).thenReturn(0);
         when(paymentRepository.findByPaymentIdAndUserId("payment-1", 1L))
                 .thenReturn(Optional.empty());
@@ -139,14 +139,35 @@ class PaymentWriterTest {
         verify(userRepository, never()).increaseCouponCount(anyLong(), anyInt());
     }
 
+    // PAID 전환 실패 시 기존 결제가 READY이면 아직 완료 처리되지 않은 상태이므로 상태 오류를 던집니다.
+    @Test
+    void completePayment_throwsWhenExistingPaymentIsStillReady() {
+        User user = User.createTestUser("test-user", DeviceType.IOS);
+        Payment readyPayment = Payment.ready("payment-1", user, CouponProduct.COUPON_4);
+
+        when(paymentRepository.markReadyPaymentAsPaid(
+                "payment-1", 1L, CouponProduct.COUPON_4, 3000L, 4, PaymentStatus.READY, PaymentStatus.PAID
+        )).thenReturn(0);
+        when(paymentRepository.findByPaymentIdAndUserId("payment-1", 1L))
+                .thenReturn(Optional.of(readyPayment));
+
+        assertThatThrownBy(() -> paymentWriter.completePayment(
+                1L, "payment-1", CouponProduct.COUPON_4, PAID_RESPONSE
+        ))
+                .isInstanceOfSatisfying(GeneralException.class, e ->
+                        assertThat(e.getErrorStatus()).isEqualTo(ErrorStatus.PAYMENT_STATUS_INVALID));
+
+        verify(userRepository, never()).increaseCouponCount(anyLong(), anyInt());
+    }
+
     // PortOne 응답의 amount가 null이면 totalAmount가 null로 반환됩니다.
     @Test
     void completePayment_handlesNullAmount() {
         User user = User.createTestUser("test-user", DeviceType.IOS);
         PortOnePaymentResponse nullAmountResponse = new PortOnePaymentResponse("payment-1", "PAID", null);
 
-        when(paymentRepository.insertIgnorePaidPayment(
-                "payment-1", 1L, "COUPON_1", null, 1
+        when(paymentRepository.markReadyPaymentAsPaid(
+                "payment-1", 1L, CouponProduct.COUPON_1, null, 1, PaymentStatus.READY, PaymentStatus.PAID
         )).thenReturn(1);
         when(userRepository.increaseCouponCount(1L, 1)).thenReturn(1);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));

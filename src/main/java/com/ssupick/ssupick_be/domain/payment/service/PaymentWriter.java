@@ -6,6 +6,7 @@ import com.ssupick.ssupick_be.domain.payment.dto.response.PaymentVerifyResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PortOnePaymentResponse;
 import com.ssupick.ssupick_be.domain.payment.entity.Payment;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
+import com.ssupick.ssupick_be.domain.payment.enums.PaymentStatus;
 import com.ssupick.ssupick_be.domain.payment.repository.PaymentRepository;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
@@ -20,8 +21,7 @@ public class PaymentWriter {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
 
-    // 외부 API 호출 없이 DB 저장 + 쿠폰 충전만 수행하는 짧은 트랜잭션입니다.
-    // INSERT IGNORE로 중복 요청을 예외 없이 처리하고, affected row로 신규/중복 여부를 판단합니다.
+    // 외부 API 호출 없이 READY 결제 기록을 PAID로 전환하고 쿠폰을 충전하는 짧은 트랜잭션입니다.
     @Transactional
     public PaymentVerifyResponse completePayment(
             Long userId,
@@ -31,19 +31,23 @@ public class PaymentWriter {
     ) {
         Long actualAmount = payment.amount() != null ? payment.amount().total() : null;
 
-        int inserted = paymentRepository.insertIgnorePaidPayment(
+        int markedPaid = paymentRepository.markReadyPaymentAsPaid(
                 paymentId,
                 userId,
-                couponProduct.name(),
+                couponProduct,
                 actualAmount,
-                couponProduct.getCouponCount()
+                couponProduct.getCouponCount(),
+                PaymentStatus.READY,
+                PaymentStatus.PAID
         );
 
-        // 중복 요청 — 소유자 검증 후 기존 결제 결과를 반환합니다.
-        if (inserted == 0) {
-            // paymentId + userId로 조회 — 없으면 다른 유저의 결제이므로 거부합니다.
+        // 중복 요청 또는 잘못된 요청 — 기존 결제 상태를 확인합니다.
+        if (markedPaid == 0) {
             Payment existingPayment = paymentRepository.findByPaymentIdAndUserId(paymentId, userId)
                     .orElseThrow(() -> new GeneralException(ErrorStatus.PAYMENT_ALREADY_PROCESSED));
+            if (existingPayment.getStatus() != PaymentStatus.PAID) {
+                throw new GeneralException(ErrorStatus.PAYMENT_STATUS_INVALID);
+            }
 
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
@@ -57,7 +61,7 @@ public class PaymentWriter {
             );
         }
 
-        // 신규 요청 — 쿠폰을 충전하고 결과를 반환합니다.
+        // 신규 완료 요청 — PAID 전환에 성공한 요청만 쿠폰을 충전합니다.
         int updated = userRepository.increaseCouponCount(userId, couponProduct.getCouponCount());
         if (updated != 1) {
             throw new GeneralException(ErrorStatus.USER_NOT_FOUND);

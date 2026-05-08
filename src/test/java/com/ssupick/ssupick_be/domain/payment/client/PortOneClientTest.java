@@ -30,7 +30,9 @@ class PortOneClientTest {
 
         PortOneProperties properties = new PortOneProperties(
                 mockWebServer.url("/").toString(),
-                "test_api_secret"
+                "test_api_secret",
+                "test_store_id",
+                "test_channel_key"
         );
         portOneClient = new PortOneClient(properties);
     }

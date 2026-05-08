@@ -9,8 +9,9 @@ import com.ssupick.ssupick_be.domain.payment.dto.response.PaymentVerifyResponse;
 import com.ssupick.ssupick_be.domain.payment.dto.response.PortOnePaymentResponse;
 import com.ssupick.ssupick_be.domain.payment.entity.Payment;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
+import com.ssupick.ssupick_be.domain.payment.properties.PortOneProperties;
 import com.ssupick.ssupick_be.domain.payment.repository.PaymentRepository;
-import com.ssupick.ssupick_be.domain.payment.service.PaymentWriter;
+import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final PaymentWriter paymentWriter;
+    private final PortOneProperties portOneProperties;
 
     // 프론트 결제 화면에 표시할 쿠폰 상품 목록을 조회합니다.
     @Transactional(readOnly = true)
@@ -67,6 +70,73 @@ public class PaymentService {
         return paymentWriter.completePayment(userId, paymentId, couponProduct, portOnePayment);
     }
 
+    // PortOne Browser SDK를 로드하자마자 결제창을 여는 최소 HTML을 생성합니다.
+    @Transactional
+    public String buildCheckoutHtml(Long userId, CouponProduct couponProduct) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+        String paymentId = generatePaymentId(userId);
+        paymentRepository.save(Payment.ready(paymentId, user, couponProduct));
+
+        String storeId = jsString(portOneProperties.storeId());
+        String channelKey = jsString(portOneProperties.channelKey());
+        String safePaymentId = jsString(paymentId);
+        String orderName = jsString(couponProduct.getOrderName());
+        String productCode = jsString(couponProduct.name());
+        String customerName = jsString(user.getName() != null ? user.getName() : "테스트 유저");
+        String customerEmail = jsString(user.getEmail() != null ? user.getEmail() : "test@example.com");
+
+        return """
+                <!doctype html>
+                <html lang="ko">
+                <head>
+                  <meta charset="UTF-8" />
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                  <title>SSUPICK 쿠폰 결제</title>
+                  <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+                </head>
+                <body>
+                  <noscript>결제를 진행하려면 JavaScript를 활성화해야 합니다.</noscript>
+                  <script>
+                    const paymentId = "%s";
+                    const couponProduct = "%s";
+
+                    window.addEventListener("load", async () => {
+                      const response = await PortOne.requestPayment({
+                        storeId: "%s",
+                        channelKey: "%s",
+                        paymentId,
+                        orderName: "%s",
+                        totalAmount: %d,
+                        currency: "KRW",
+                        payMethod: "CARD",
+                        customer: {
+                          fullName: "%s",
+                          email: "%s",
+                          phoneNumber: "01012345678"
+                        }
+                      });
+
+                      result.textContent = JSON.stringify({ paymentId, couponProduct, response }, null, 2);
+                      console.log("paymentId:", paymentId);
+                      console.log("couponProduct:", couponProduct);
+                      console.log("response:", response);
+                    });
+                  </script>
+                </body>
+                </html>
+                """.formatted(
+                safePaymentId,
+                productCode,
+                storeId,
+                channelKey,
+                orderName,
+                couponProduct.getPrice(),
+                customerName,
+                customerEmail
+        );
+    }
+
     // PortOne 응답의 결제 상태와 금액을 검증합니다.
     private void validatePayment(PortOnePaymentResponse payment, CouponProduct couponProduct) {
         if (!PAID_STATUS.equals(payment.status())) {
@@ -76,5 +146,21 @@ public class PaymentService {
         if (!couponProduct.getPrice().equals(actualAmount)) {
             throw new GeneralException(ErrorStatus.PAYMENT_AMOUNT_MISMATCH);
         }
+    }
+
+    private String jsString(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
+    }
+
+    private String generatePaymentId(Long userId) {
+        String randomPart = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+        return "cp" + userId + "_" + randomPart;
     }
 }

@@ -46,6 +46,22 @@ public class Payment extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private PaymentStatus status;
 
+    // 결제창 진입 전 생성되는 대기 상태 결제 기록 엔티티를 생성합니다.
+    public static Payment ready(
+            String paymentId,
+            User user,
+            CouponProduct couponProduct
+    ) {
+        return Payment.builder()
+                .paymentId(paymentId)
+                .user(user)
+                .couponProduct(couponProduct)
+                .paidAmount(0L)
+                .chargedCouponCount(0)
+                .status(PaymentStatus.READY)
+                .build();
+    }
+
     // 검증 완료된 결제 기록 엔티티를 생성합니다.
     public static Payment paid(
             String paymentId,
