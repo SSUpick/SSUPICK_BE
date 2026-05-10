@@ -74,8 +74,8 @@ public enum ErrorStatus implements BaseStatus {
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404_1", "결제 정보를 찾을 수 없습니다."),
     PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_400_1", "결제 금액이 일치하지 않습니다."),
     PAYMENT_STATUS_INVALID(HttpStatus.BAD_REQUEST, "PAYMENT_400_2", "결제가 완료되지 않았습니다."),
+    PAYMENT_PHONE_NUMBER_REQUIRED(HttpStatus.BAD_REQUEST, "PAYMENT_400_3", "결제를 진행하려면 전화번호 등록이 필요합니다."),
     PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "PAYMENT_409_1", "이미 처리된 결제입니다."),
-    PAYMENT_PHONE_NUMBER_REQUIRED(HttpStatus.CONFLICT, "PAYMENT_409_2", "결제를 진행하려면 전화번호 등록이 필요합니다."),
     PORTONE_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "PORTONE_502_1", "포트원 API 요청에 실패했습니다.");
 
     private final HttpStatus httpStatus;
