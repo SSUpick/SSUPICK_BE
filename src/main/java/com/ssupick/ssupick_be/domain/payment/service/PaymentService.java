@@ -81,6 +81,7 @@ public class PaymentService {
 
         String storeId = jsString(portOneProperties.storeId());
         String channelKey = jsString(portOneProperties.channelKey());
+        String redirectUrl = jsString(portOneProperties.redirectUrl());
         String safePaymentId = jsString(paymentId);
         String orderName = jsString(couponProduct.getOrderName());
         String productCode = jsString(couponProduct.name());
@@ -111,6 +112,7 @@ public class PaymentService {
                         totalAmount: %d,
                         currency: "KRW",
                         payMethod: "CARD",
+                        redirectUrl: "%s",
                         customer: {
                           fullName: "%s",
                           email: "%s",
@@ -132,6 +134,7 @@ public class PaymentService {
                 channelKey,
                 orderName,
                 couponProduct.getPrice(),
+                redirectUrl,
                 customerName,
                 customerEmail
         );

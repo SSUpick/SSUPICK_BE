@@ -10,6 +10,7 @@ import com.ssupick.ssupick_be.domain.payment.dto.response.PortOnePaymentResponse
 import com.ssupick.ssupick_be.domain.payment.entity.Payment;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
 import com.ssupick.ssupick_be.domain.payment.enums.PaymentStatus;
+import com.ssupick.ssupick_be.domain.payment.properties.PortOneProperties;
 import com.ssupick.ssupick_be.domain.payment.repository.PaymentRepository;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
@@ -45,6 +46,9 @@ class PaymentServiceTest {
     @Mock
     private PaymentWriter paymentWriter;
 
+    @Mock
+    private PortOneProperties portOneProperties;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -57,6 +61,22 @@ class PaymentServiceTest {
                 .containsExactly("COUPON_1", "COUPON_4", "COUPON_8");
         assertThat(response).extracting(CouponProductResponse::price)
                 .containsExactly(1000L, 3000L, 5000L);
+    }
+
+    // 결제창 HTML에 PortOne 리디렉션 완료 URL을 포함합니다.
+    @Test
+    void buildCheckoutHtml_includesRedirectUrl() {
+        User user = User.createTestUser("test-user", DeviceType.IOS);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(portOneProperties.storeId()).thenReturn("test_store_id");
+        when(portOneProperties.channelKey()).thenReturn("test_channel_key");
+        when(portOneProperties.redirectUrl()).thenReturn("https://ssupick.love/payments/complete");
+
+        String html = paymentService.buildCheckoutHtml(1L, CouponProduct.COUPON_1);
+
+        assertThat(html).contains("redirectUrl: \"https://ssupick.love/payments/complete\"");
+        verify(paymentRepository).save(any(Payment.class));
     }
 
     // 기존 결제가 PAID이면 PortOne 호출 없이 바로 기존 결과를 반환합니다.
