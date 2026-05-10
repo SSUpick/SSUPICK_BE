@@ -3,6 +3,7 @@ package com.ssupick.ssupick_be.domain.payment.repository;
 import com.ssupick.ssupick_be.domain.payment.entity.Payment;
 import com.ssupick.ssupick_be.domain.payment.enums.CouponProduct;
 import com.ssupick.ssupick_be.domain.payment.enums.PaymentStatus;
+import com.ssupick.ssupick_be.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -74,4 +75,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             @Param("paidAmount") Long paidAmount,
             @Param("chargedCouponCount") int chargedCouponCount
     );
+
+    void deleteAllByUser(User user);
 }

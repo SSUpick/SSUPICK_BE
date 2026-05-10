@@ -166,4 +166,8 @@ public class PaymentService {
         String randomPart = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
         return "cp" + userId + "_" + randomPart;
     }
+
+    public void deleteByUser(User user){
+        paymentRepository.deleteAllByUser(user);
+    }
 }

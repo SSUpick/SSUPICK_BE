@@ -4,6 +4,7 @@ import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.filter.ProfanityFilter;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
+import com.ssupick.ssupick_be.domain.payment.service.PaymentService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
@@ -27,6 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ProfileViewRepository profileViewRepository;
     private final ProfanityFilter profanityFilter;
+    private final PaymentService paymentService;
 
     // ───────────────────────────── 공통 내부 헬퍼 ─────────────────────────────
 
@@ -166,6 +168,7 @@ public class UserService {
     public void withdraw(Long userId) {
         User user = getUserOrThrow(userId);
         aiImageService.deleteByUser(user);
+        paymentService.deleteByUser(user);
         deleteProfileView(user);
         userRepository.delete(user);
     }
