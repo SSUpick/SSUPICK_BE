@@ -4,6 +4,7 @@ import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.common.status.SuccessStatus;
 import com.ssupick.ssupick_be.domain.user.controller.docs.UserControllerDocs;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetTargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserCardResponse;
@@ -70,6 +71,16 @@ public class UserController implements UserControllerDocs {
     ) {
         userService.updateUserProfile(userId, request);
         return ApiResponse.success(SuccessStatus.UPDATE_USER_PROFILE_SUCCESS);
+    }
+
+    @PatchMapping("/me/phone-number")
+    @Override
+    public ResponseEntity<ApiResponse<Void>> updatePhoneNumber(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid UpdatePhoneNumberRequest request
+    ) {
+        userService.updatePhoneNumber(userId, request);
+        return ApiResponse.success(SuccessStatus.UPDATE_PHONE_NUMBER_SUCCESS);
     }
 
     @GetMapping("/me/profile-views")

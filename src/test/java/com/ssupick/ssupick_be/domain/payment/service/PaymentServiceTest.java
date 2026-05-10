@@ -67,6 +67,7 @@ class PaymentServiceTest {
     @Test
     void buildCheckoutHtml_includesRedirectUrl() {
         User user = User.createTestUser("test-user", DeviceType.IOS);
+        user.updatePhoneNumber("01012345678");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(portOneProperties.storeId()).thenReturn("test_store_id");
@@ -76,7 +77,22 @@ class PaymentServiceTest {
         String html = paymentService.buildCheckoutHtml(1L, CouponProduct.COUPON_1);
 
         assertThat(html).contains("redirectUrl: \"https://ssupick.love/payments/complete\"");
+        assertThat(html).contains("phoneNumber: \"01012345678\"");
         verify(paymentRepository).save(any(Payment.class));
+    }
+
+    // 결제용 전화번호가 없으면 결제창 HTML을 만들지 않고 예외를 던집니다.
+    @Test
+    void buildCheckoutHtml_throwsWhenPhoneNumberIsMissing() {
+        User user = User.createTestUser("test-user", DeviceType.IOS);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> paymentService.buildCheckoutHtml(1L, CouponProduct.COUPON_1))
+                .isInstanceOfSatisfying(GeneralException.class, e ->
+                        assertThat(e.getErrorStatus()).isEqualTo(ErrorStatus.PAYMENT_PHONE_NUMBER_REQUIRED));
+
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 
     // 기존 결제가 PAID이면 PortOne 호출 없이 바로 기존 결과를 반환합니다.

@@ -2,6 +2,7 @@ package com.ssupick.ssupick_be.domain.user.controller.docs;
 
 import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetTargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserCardResponse;
@@ -125,6 +126,24 @@ public interface UserControllerDocs {
     ResponseEntity<ApiResponse<Void>> updateUserProfile(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
             @RequestBody @Valid UpdateUserProfileRequest request
+    );
+
+    @Operation(
+            summary = "결제용 전화번호 등록/수정",
+            description = "쿠폰 결제에 사용할 전화번호를 하이픈 없이 등록하거나 수정합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "전화번호 등록 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (유효성 검사 실패)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    ResponseEntity<ApiResponse<Void>> updatePhoneNumber(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid UpdatePhoneNumberRequest request
     );
 
     @Operation(

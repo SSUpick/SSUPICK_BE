@@ -44,6 +44,9 @@ public class GetUserProfileResponse {
     @Schema(description = "연락처", example = "@ssu_pick")
     private String contact;
 
+    @Schema(description = "결제용 전화번호", example = "01012345678")
+    private String phoneNumber;
+
     @Schema(description = "어필 항목 목록", example = "[\"고양이상\", \"160cm\", \"청순\"]")
     private List<String> appeals;
 
@@ -61,6 +64,7 @@ public class GetUserProfileResponse {
                 .nickname(user.getNickname())
                 .mbti(user.getMbti())
                 .contact(user.getContact())
+                .phoneNumber(user.getPhoneNumber())
                 .appeals(user.getAppeals())
                 .remainingCouponCount(user.getRemainingCouponCount())
                 .build();

@@ -64,6 +64,9 @@ public class User extends BaseEntity {
     @Column(name = "contact", length = 50)
     private String contact;
 
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
     @Column(name = "appeal1", length = 8)
     private String appeal1;
 
@@ -137,6 +140,11 @@ public class User extends BaseEntity {
         this.appeal1 = command.appeals().size() >= 1 ? command.appeals().get(0) : null;
         this.appeal2 = command.appeals().size() >= 2 ? command.appeals().get(1) : null;
         this.appeal3 = command.appeals().size() >= 3 ? command.appeals().get(2) : null;
+    }
+
+    // 결제에 사용할 전화번호 등록/수정
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     // 로그아웃 처리 — 리프레시 토큰 무효화

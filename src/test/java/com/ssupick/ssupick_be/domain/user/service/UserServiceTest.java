@@ -4,7 +4,9 @@ import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.filter.ProfanityFilter;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
+import com.ssupick.ssupick_be.domain.payment.service.PaymentService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
@@ -41,6 +43,9 @@ class UserServiceTest {
 
     @Mock
     private ProfanityFilter profanityFilter;
+
+    @Mock
+    private PaymentService paymentService;
 
     @InjectMocks
     private UserService userService;
@@ -125,5 +130,17 @@ class UserServiceTest {
 
         assertThat(user.getNickname()).isEqualTo("old");
         verify(profanityFilter).validateAppeals(List.of("bad-appeal"));
+    }
+
+    // 결제용 전화번호를 유저 엔티티에 저장합니다.
+    @Test
+    void updatePhoneNumber_updatesUserPhoneNumber() {
+        User user = User.createTestUser("test-user", DeviceType.IOS);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        userService.updatePhoneNumber(1L, new UpdatePhoneNumberRequest("01012345678"));
+
+        assertThat(user.getPhoneNumber()).isEqualTo("01012345678");
     }
 }

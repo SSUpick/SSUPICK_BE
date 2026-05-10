@@ -76,6 +76,10 @@ public class PaymentService {
     public String buildCheckoutHtml(Long userId, CouponProduct couponProduct) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+        if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) {
+            throw new GeneralException(ErrorStatus.PAYMENT_PHONE_NUMBER_REQUIRED);
+        }
+
         String paymentId = generatePaymentId(userId);
         paymentRepository.save(Payment.ready(paymentId, user, couponProduct));
 
@@ -87,6 +91,7 @@ public class PaymentService {
         String productCode = jsString(couponProduct.name());
         String customerName = jsString(user.getName() != null ? user.getName() : "테스트 유저");
         String customerEmail = jsString(user.getEmail() != null ? user.getEmail() : "test@example.com");
+        String customerPhoneNumber = jsString(user.getPhoneNumber());
 
         return """
                 <!doctype html>
@@ -116,7 +121,7 @@ public class PaymentService {
                         customer: {
                           fullName: "%s",
                           email: "%s",
-                          phoneNumber: "01012345678"
+                          phoneNumber: "%s"
                         }
                       });
 
@@ -136,7 +141,8 @@ public class PaymentService {
                 couponProduct.getPrice(),
                 redirectUrl,
                 customerName,
-                customerEmail
+                customerEmail,
+                customerPhoneNumber
         );
     }
 

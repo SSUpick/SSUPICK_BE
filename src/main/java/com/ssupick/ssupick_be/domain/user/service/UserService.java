@@ -6,6 +6,7 @@ import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
 import com.ssupick.ssupick_be.domain.payment.service.PaymentService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
 import com.ssupick.ssupick_be.domain.user.entity.User;
@@ -156,6 +157,13 @@ public class UserService {
         profanityFilter.validateNickname(request.nickname());
         profanityFilter.validateAppeals(request.appeals());
         user.updateProfile(request.toCommand());
+    }
+
+    // 결제용 전화번호 등록/수정
+    @Transactional
+    public void updatePhoneNumber(Long userId, UpdatePhoneNumberRequest request) {
+        User user = getUserOrThrow(userId);
+        user.updatePhoneNumber(request.phoneNumber());
     }
 
     // AuthService 전용 — logout/withdraw/reissue 시 사용
