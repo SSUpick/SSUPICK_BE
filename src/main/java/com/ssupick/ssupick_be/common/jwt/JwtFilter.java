@@ -12,15 +12,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Collections;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -58,11 +59,26 @@ public class JwtFilter extends OncePerRequestFilter {
             // SecurityConfig의 .anyRequest().authenticated()에서 인가 처리됨
             if (accessToken != null) {
                 jwtService.validateAccessToken(accessToken);
-                Long userId = jwtService.getUserIdFromJwtToken(accessToken);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userId, null, new ArrayList<>());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (jwtService.isAdminToken(accessToken)) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    "admin",
+                                    null,
+                                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                            );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    Long userId = jwtService.getUserIdFromJwtToken(accessToken);
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userId,
+                                    null,
+                                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                            );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
             filterChain.doFilter(request, response);
         } catch (GeneralException e) {

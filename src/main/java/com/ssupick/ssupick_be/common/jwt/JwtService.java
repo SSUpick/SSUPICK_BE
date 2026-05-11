@@ -19,6 +19,9 @@ import java.util.HexFormat;
 @Component
 public class JwtService {
 
+    private static final String ADMIN_SUBJECT = "admin";
+    private static final String ADMIN_ROLE = "ADMIN";
+
     private final SecretKey secretKey;
     @Getter
     private final long accessTokenExpiration;
@@ -64,6 +67,20 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(user.getId().toString())
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(secretKey, Jwts.SIG.HS256)
+                .compact();
+    }
+
+    // 관리자 Access Token 생성 — refresh token은 발급하지 않습니다.
+    public String generateAdminAccessToken() {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + accessTokenExpiration);
+
+        return Jwts.builder()
+                .subject(ADMIN_SUBJECT)
+                .claim("role", ADMIN_ROLE)
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey, Jwts.SIG.HS256)
@@ -124,6 +141,12 @@ public class JwtService {
         } catch (Exception e) {
             throw new GeneralException(ErrorStatus.JWT_EXTRACT_ID_FAILED);
         }
+    }
+
+    public boolean isAdminToken(String token) {
+        Claims claims = parseClaims(token);
+        return ADMIN_SUBJECT.equals(claims.getSubject())
+                && ADMIN_ROLE.equals(claims.get("role", String.class));
     }
 
     // 내부 Claims 파싱 로직
