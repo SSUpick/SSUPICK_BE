@@ -64,7 +64,8 @@ public class SecurityConfig {
     };
 
     private static final String[] WEBHOOK_URIS = {
-            "/api/webhook/bank"
+            "/api/webhook/bank",
+            "/checkpay.jsp"
     };
 
     @Bean

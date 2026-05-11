@@ -38,7 +38,11 @@ public class BankDepositService {
     @Transactional
     public BankDepositWebhookResponse receive(String webhookSecret, BankDepositWebhookRequest request) {
         validateWebhookSecret(webhookSecret);
+        return receiveVerified(request);
+    }
 
+    @Transactional
+    public BankDepositWebhookResponse receiveVerified(BankDepositWebhookRequest request) {
         return bankDepositEventRepository.findByEventKey(request.eventKey())
                 .map(event -> new BankDepositWebhookResponse(event.getId(), event.getStatus().name(), true))
                 .orElseGet(() -> processNewEvent(request));
