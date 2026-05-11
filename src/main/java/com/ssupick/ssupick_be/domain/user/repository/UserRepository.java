@@ -36,10 +36,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("""
             SELECT u
             FROM User u
-            WHERE REPLACE(LOWER(COALESCE(u.name, '')), ' ', '') = :normalizedName
-               OR REPLACE(LOWER(COALESCE(u.nickname, '')), ' ', '') = :normalizedName
+            WHERE REPLACE(LOWER(COALESCE(u.nickname, '')), ' ', '') = :normalizedNickname
             """)
-    List<User> findDepositNameMatches(@Param("normalizedName") String normalizedName);
+    List<User> findDepositNicknameMatches(@Param("normalizedNickname") String normalizedNickname);
 
     // 쿠폰 충전 — payment insert 성공 시에만 호출됩니다.
     @Modifying

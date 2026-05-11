@@ -94,7 +94,7 @@ public class BankDepositService {
         );
         BankDepositEvent savedEvent = bankDepositEventRepository.save(event);
 
-        List<User> matchedUsers = userRepository.findDepositNameMatches(normalizeName(request.depositorName()));
+        List<User> matchedUsers = userRepository.findDepositNicknameMatches(normalizeName(request.depositorName()));
         if (couponProduct != null && matchedUsers.size() == 1) {
             chargeCoupon(savedEvent, matchedUsers.get(0), couponProduct, "BANK_TRANSFER_AUTO_MATCH");
         } else {
