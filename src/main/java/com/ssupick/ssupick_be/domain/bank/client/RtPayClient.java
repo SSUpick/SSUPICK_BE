@@ -1,5 +1,7 @@
 package com.ssupick.ssupick_be.domain.bank.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssupick.ssupick_be.domain.bank.properties.BankWebhookProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -21,6 +23,7 @@ public class RtPayClient {
 
     private final WebClient webClient;
     private final BankWebhookProperties bankWebhookProperties;
+    private final ObjectMapper objectMapper;
 
     public Map<String, Object> checkPay(Map<String, String> parameters) {
         String targetUrl = resolveCheckPayUrl(parameters);
@@ -49,14 +52,23 @@ public class RtPayClient {
         return formData;
     }
 
-    @SuppressWarnings("unchecked")
     private Map<String, Object> postForm(String url, MultiValueMap<String, String> formData) {
-        return webClient.post()
+        String responseBody = webClient.post()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
-                .bodyToMono(Map.class)
+                .bodyToMono(String.class)
                 .block();
+
+        try {
+            return objectMapper.readValue(responseBody, new TypeReference<>() {});
+        } catch (Exception e) {
+            return Map.of(
+                    "RCODE", "600",
+                    "EMSG", e.getMessage(),
+                    "RBODY", responseBody == null ? "" : responseBody
+            );
+        }
     }
 }
