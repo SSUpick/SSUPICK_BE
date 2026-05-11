@@ -3,14 +3,18 @@ package com.ssupick.ssupick_be.domain.aiimage.service;
 import com.google.common.collect.ImmutableList;
 import com.google.genai.Client;
 import com.google.genai.ResponseStream;
+import com.google.genai.errors.ApiException;
 import com.google.genai.types.*;
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
+import com.ssupick.ssupick_be.domain.aiimage.properties.GeminiProperties;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Google GenAI SDK 기반 Gemini 이미지 생성 클라이언트
@@ -18,25 +22,63 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class GeminiImageClient {
 
-    @Value("${gemini.api-key}")
-    private String apiKey;
+    private final GeminiProperties geminiProperties;
+    private Client client;
 
-    @Value("${gemini.model}")
-    private String model;
-
-    @Value("${gemini.prompt}")
-    private String prompt;
+    @PostConstruct
+    void init() {
+        this.client = Client.builder().apiKey(geminiProperties.apiKey()).build();
+    }
 
     /**
      * 원본 이미지 byte[] → Gemini 스트리밍 호출 → 생성 이미지 byte[] 반환
      */
     public byte[] generateAnimalCrossingImage(byte[] originalImageBytes, String mimeType) {
-        log.info("[Gemini] 이미지 생성 요청 시작 - model: {}", model);
+        List<String> fallbackModels = geminiProperties.resolvedModels();
+        Exception lastException = null;
 
-        Client client = Client.builder().apiKey(apiKey).build();
+        for (String fallbackModel : fallbackModels) {
+            try {
+                log.info("[Gemini] 이미지 생성 요청 시작 - model: {}", fallbackModel);
+                byte[] generatedImageBytes = generateWithModel(
+                        client, fallbackModel, originalImageBytes, mimeType
+                );
 
+                if (!Objects.equals(fallbackModel, fallbackModels.get(0))) {
+                    log.warn("[Gemini] 예비 모델로 폴백되었습니다 - model: {}", fallbackModel);
+                }
+                return generatedImageBytes;
+            } catch (GeneratedImageMissingException e) {
+                log.error("[Gemini] 응답에 생성 이미지가 없어 폴백하지 않습니다 - model: {}", fallbackModel, e);
+                throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_FAILED, e);
+            } catch (ApiException e) {
+                if (!isFallbackApiError(e)) {
+                    log.error("[Gemini] 비일시적 API 오류로 폴백하지 않습니다 - model: {}, code: {}",
+                            fallbackModel, e.code(), e);
+                    throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_FAILED, e);
+                }
+
+                lastException = e;
+                log.warn("[Gemini] 일시적 API 오류, 다음 모델을 시도합니다 - model: {}, code: {}",
+                        fallbackModel, e.code(), e);
+            } catch (Exception e) {
+                lastException = e;
+                log.warn("[Gemini] 모델 호출 실패, 다음 모델을 시도합니다 - model: {}", fallbackModel, e);
+            }
+        }
+
+        throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_FAILED, lastException);
+    }
+
+    private byte[] generateWithModel(
+            Client client,
+            String targetModel,
+            byte[] originalImageBytes,
+            String mimeType
+    ) {
         // 이미지 Part 구성 — Blob.builder()로 mimeType + data 주입
         Part imagePart = Part.builder()
                 .inlineData(Blob.builder()
@@ -47,7 +89,7 @@ public class GeminiImageClient {
 
         // 텍스트 프롬프트 Part
         Part textPart = Part.builder()
-                .text(prompt)
+                .text(geminiProperties.prompt())
                 .build();
 
         // Content 구성
@@ -65,7 +107,7 @@ public class GeminiImageClient {
 
         // 스트리밍 응답에서 이미지 데이터 추출
         try (ResponseStream<GenerateContentResponse> responseStream =
-                     client.models.generateContentStream(model, contents, config)) {
+                     client.models.generateContentStream(targetModel, contents, config)) {
 
             for (GenerateContentResponse res : responseStream) {
                 // 편의 메서드 parts() 사용 — null safe
@@ -81,17 +123,48 @@ public class GeminiImageClient {
                         if (imageBytesOpt.isEmpty() || imageBytesOpt.get().length == 0)
                             continue;
                         byte[] imageBytes = imageBytesOpt.get();
-                        log.info("[Gemini] 이미지 생성 성공");
+                        log.info("[Gemini] 이미지 생성 성공 - model: {}", targetModel);
                         return imageBytes;
                     }
                 }
             }
-
-        } catch (Exception e) {
-            log.error("[Gemini] 이미지 생성 실패", e);
-            throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_FAILED, e);
         }
 
-        throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_FAILED);
+        throw new GeneratedImageMissingException();
+    }
+
+    private boolean isFallbackApiError(ApiException exception) {
+        int statusCode = exception.code();
+        return statusCode == 429
+                || statusCode == 500
+                || statusCode == 502
+                || statusCode == 503
+                || statusCode == 504
+                || statusCode == 404
+                || isModelUnsupportedError(exception);
+    }
+
+    private boolean isModelUnsupportedError(ApiException exception) {
+        if (exception.code() != 400) {
+            return false;
+        }
+
+        String message = exception.message();
+        if (message == null) {
+            return false;
+        }
+
+        String normalizedMessage = message.toLowerCase();
+        return normalizedMessage.contains("model")
+                && (normalizedMessage.contains("not found")
+                || normalizedMessage.contains("not supported")
+                || normalizedMessage.contains("not available")
+                || normalizedMessage.contains("does not support"));
+    }
+
+    private static class GeneratedImageMissingException extends RuntimeException {
+        private GeneratedImageMissingException() {
+            super("Gemini response did not contain generated image data.");
+        }
     }
 }

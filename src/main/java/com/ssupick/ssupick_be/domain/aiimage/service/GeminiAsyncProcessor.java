@@ -54,8 +54,6 @@ public class GeminiAsyncProcessor {
                     .orElseThrow(() -> new GeneralException(ErrorStatus.AI_IMAGE_NOT_FOUND));
             aiImage.markDone(generatedKey);
 
-        } catch (GeneralException e) {
-            throw e; // AI_IMAGE_NOT_FOUND 등 비즈니스 예외는 그대로 전파
         } catch (Exception e) {
             log.error("[Gemini] 생성 실패 - aiImageId: {}", aiImageId, e);
 
