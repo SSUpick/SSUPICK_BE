@@ -6,6 +6,8 @@ import com.ssupick.ssupick_be.domain.admin.dto.request.AdminLoginRequest;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminCouponAddResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminLoginResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminUserSearchResponse;
+import com.ssupick.ssupick_be.domain.bank.dto.request.BankDepositAssignRequest;
+import com.ssupick.ssupick_be.domain.bank.dto.response.BankDepositEventResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -83,5 +86,40 @@ public interface AdminControllerDocs {
     })
     ResponseEntity<ApiResponse<AdminCouponAddResponse>> addCoupon(
             @Valid @RequestBody AdminCouponAddRequest request
+    );
+
+    @Operation(
+            summary = "관리자 입금 이벤트 목록 조회",
+            description = "자동 처리되지 않았거나 검토가 필요한 입금 이벤트 목록을 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "입금 이벤트 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = BankDepositEventResponse.class))
+            )
+    })
+    ResponseEntity<ApiResponse<List<BankDepositEventResponse>>> getDepositEvents();
+
+    @Operation(
+            summary = "관리자 입금 이벤트 수동 매칭",
+            description = "관리자가 입금 이벤트를 유저와 수동 매칭하고 쿠폰을 충전합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "입금 이벤트 수동 매칭 성공",
+                    content = @Content(schema = @Schema(implementation = BankDepositEventResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "입금 이벤트 또는 유저 없음",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    ResponseEntity<ApiResponse<BankDepositEventResponse>> assignDepositEvent(
+            @Parameter(description = "입금 이벤트 ID", required = true)
+            @PathVariable Long eventId,
+            @Valid @RequestBody BankDepositAssignRequest request
     );
 }

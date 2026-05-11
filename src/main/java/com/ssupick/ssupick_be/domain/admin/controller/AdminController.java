@@ -9,6 +9,9 @@ import com.ssupick.ssupick_be.domain.admin.dto.response.AdminCouponAddResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminLoginResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminUserSearchResponse;
 import com.ssupick.ssupick_be.domain.admin.service.AdminService;
+import com.ssupick.ssupick_be.domain.bank.dto.request.BankDepositAssignRequest;
+import com.ssupick.ssupick_be.domain.bank.dto.response.BankDepositEventResponse;
+import com.ssupick.ssupick_be.domain.bank.service.BankDepositService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ import java.util.List;
 public class AdminController implements AdminControllerDocs {
 
     private final AdminService adminService;
+    private final BankDepositService bankDepositService;
 
     @PostMapping("/login")
     @Override
@@ -50,6 +54,23 @@ public class AdminController implements AdminControllerDocs {
     ) {
         AdminCouponAddResponse response = adminService.addCoupon(request);
         return ApiResponse.success(SuccessStatus.ADMIN_COUPON_ADD_SUCCESS, response);
+    }
+
+    @GetMapping("/deposit-events")
+    @Override
+    public ResponseEntity<ApiResponse<List<BankDepositEventResponse>>> getDepositEvents() {
+        List<BankDepositEventResponse> response = bankDepositService.getPendingEvents();
+        return ApiResponse.success(SuccessStatus.ADMIN_DEPOSIT_EVENT_LIST_SUCCESS, response);
+    }
+
+    @PostMapping("/deposit-events/{eventId}/assign")
+    @Override
+    public ResponseEntity<ApiResponse<BankDepositEventResponse>> assignDepositEvent(
+            @PathVariable Long eventId,
+            @Valid @RequestBody BankDepositAssignRequest request
+    ) {
+        BankDepositEventResponse response = bankDepositService.assign(eventId, request);
+        return ApiResponse.success(SuccessStatus.ADMIN_DEPOSIT_EVENT_ASSIGN_SUCCESS, response);
     }
 
     private String resolveClientIp(HttpServletRequest request) {
