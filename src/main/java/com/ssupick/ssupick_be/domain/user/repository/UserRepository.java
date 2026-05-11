@@ -33,6 +33,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
             """)
     List<User> searchForAdmin(@Param("keyword") String keyword, @Param("userId") Long userId);
 
+    @Query("""
+            SELECT u
+            FROM User u
+            WHERE REPLACE(LOWER(COALESCE(u.name, '')), ' ', '') = :normalizedName
+               OR REPLACE(LOWER(COALESCE(u.nickname, '')), ' ', '') = :normalizedName
+            """)
+    List<User> findDepositNameMatches(@Param("normalizedName") String normalizedName);
+
     // 쿠폰 충전 — payment insert 성공 시에만 호출됩니다.
     @Modifying
     @Query("UPDATE User u SET u.remainingCouponCount = u.remainingCouponCount + :count WHERE u.id = :userId")

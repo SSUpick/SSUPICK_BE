@@ -63,6 +63,10 @@ public class SecurityConfig {
             "/actuator/health"
     };
 
+    private static final String[] WEBHOOK_URIS = {
+            "/api/webhook/bank"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -79,6 +83,7 @@ public class SecurityConfig {
                         .requestMatchers(AUTH_URIS).permitAll()
                         .requestMatchers(USER_URIS).permitAll()
                         .requestMatchers(HEALTH_URIS).permitAll()
+                        .requestMatchers(WEBHOOK_URIS).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().hasAnyRole("USER", "ADMIN")
                 )

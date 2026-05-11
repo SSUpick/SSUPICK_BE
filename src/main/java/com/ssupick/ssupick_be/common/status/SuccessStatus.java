@@ -53,7 +53,14 @@ public enum SuccessStatus implements BaseStatus {
      * Admin
      */
     ADMIN_USER_SEARCH_SUCCESS(HttpStatus.OK, "ADMIN_200_1", "관리자 유저 검색에 성공했습니다."),
-    ADMIN_COUPON_ADD_SUCCESS(HttpStatus.OK, "ADMIN_200_2", "관리자 쿠폰 충전에 성공했습니다.");
+    ADMIN_COUPON_ADD_SUCCESS(HttpStatus.OK, "ADMIN_200_2", "관리자 쿠폰 충전에 성공했습니다."),
+    ADMIN_DEPOSIT_EVENT_LIST_SUCCESS(HttpStatus.OK, "ADMIN_200_3", "입금 이벤트 목록 조회에 성공했습니다."),
+    ADMIN_DEPOSIT_EVENT_ASSIGN_SUCCESS(HttpStatus.OK, "ADMIN_200_4", "입금 이벤트 수동 매칭에 성공했습니다."),
+
+    /**
+     * Bank
+     */
+    BANK_DEPOSIT_WEBHOOK_SUCCESS(HttpStatus.OK, "BANK_200_1", "입금 이벤트 수신에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
