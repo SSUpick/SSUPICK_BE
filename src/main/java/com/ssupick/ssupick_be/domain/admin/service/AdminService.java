@@ -1,6 +1,7 @@
 package com.ssupick.ssupick_be.domain.admin.service;
 
 import com.ssupick.ssupick_be.common.exception.GeneralException;
+import com.ssupick.ssupick_be.common.discord.DiscordNotificationService;
 import com.ssupick.ssupick_be.common.jwt.JwtService;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.admin.dto.request.AdminCouponAddRequest;
@@ -31,6 +32,7 @@ public class AdminService {
     private final AdminLoginAttemptService adminLoginAttemptService;
     private final UserRepository userRepository;
     private final AdminCouponAdjustmentRepository adminCouponAdjustmentRepository;
+    private final DiscordNotificationService discordNotificationService;
 
     public AdminLoginResponse login(String clientIp, AdminLoginRequest request) {
         if (adminLoginAttemptService.isLocked(clientIp)) {
@@ -78,6 +80,12 @@ public class AdminService {
         );
 
         AdminCouponAdjustment savedAdjustment = adminCouponAdjustmentRepository.save(adjustment);
+        discordNotificationService.notifyCouponCharged(
+                "관리자 수동 충전",
+                couponProduct.getPrice(),
+                couponProduct.getCouponCount(),
+                user
+        );
         return AdminCouponAddResponse.from(savedAdjustment);
     }
 

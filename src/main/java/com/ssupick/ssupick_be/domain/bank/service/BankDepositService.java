@@ -1,6 +1,7 @@
 package com.ssupick.ssupick_be.domain.bank.service;
 
 import com.ssupick.ssupick_be.common.exception.GeneralException;
+import com.ssupick.ssupick_be.common.discord.DiscordNotificationService;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.admin.entity.AdminCouponAdjustment;
 import com.ssupick.ssupick_be.domain.admin.repository.AdminCouponAdjustmentRepository;
@@ -34,6 +35,7 @@ public class BankDepositService {
     private final BankDepositEventRepository bankDepositEventRepository;
     private final UserRepository userRepository;
     private final AdminCouponAdjustmentRepository adminCouponAdjustmentRepository;
+    private final DiscordNotificationService discordNotificationService;
 
     @Transactional
     public BankDepositWebhookResponse receive(String webhookSecret, BankDepositWebhookRequest request) {
@@ -124,6 +126,12 @@ public class BankDepositService {
         ));
 
         event.markProcessed(user, couponProduct);
+        discordNotificationService.notifyCouponCharged(
+                event.getDepositorName(),
+                event.getAmount(),
+                couponProduct.getCouponCount(),
+                user
+        );
     }
 
     private CouponProduct resolveCouponProduct(Long amount) {
