@@ -44,6 +44,7 @@ public class SecurityConfig {
      * 인증(회원가입, 로그인 등) 관련 경로
      */
     public static final String[] AUTH_URIS = {
+            "/api/admin/login",
             "/api/auth/test/login",
             "/api/auth/token/reissue"
     };
@@ -78,7 +79,8 @@ public class SecurityConfig {
                         .requestMatchers(AUTH_URIS).permitAll()
                         .requestMatchers(USER_URIS).permitAll()
                         .requestMatchers(HEALTH_URIS).permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().hasAnyRole("USER", "ADMIN")
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

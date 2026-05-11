@@ -21,6 +21,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 온보딩 완료 유저 중 본인 제외 전체 조회
     List<User> findAllByOnboardingStatusAndIdNot(OnboardingStatus onboardingStatus, Long excludeId);
 
+    @Query("""
+            SELECT u
+            FROM User u
+            WHERE (:userId IS NOT NULL AND u.id = :userId)
+               OR LOWER(COALESCE(u.nickname, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(COALESCE(u.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(COALESCE(u.email, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR COALESCE(u.phoneNumber, '') LIKE CONCAT('%', :keyword, '%')
+            ORDER BY u.id DESC
+            """)
+    List<User> searchForAdmin(@Param("keyword") String keyword, @Param("userId") Long userId);
+
     // 쿠폰 충전 — payment insert 성공 시에만 호출됩니다.
     @Modifying
     @Query("UPDATE User u SET u.remainingCouponCount = u.remainingCouponCount + :count WHERE u.id = :userId")
