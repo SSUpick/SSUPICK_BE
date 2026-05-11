@@ -1,5 +1,6 @@
 package com.ssupick.ssupick_be;
 
+import com.ssupick.ssupick_be.domain.aiimage.properties.GeminiProperties;
 import com.ssupick.ssupick_be.domain.oauth.properties.KakaoProperties;
 import com.ssupick.ssupick_be.domain.payment.properties.PortOneProperties;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
 @SpringBootApplication
-@EnableConfigurationProperties({KakaoProperties.class, PortOneProperties.class})
+@EnableConfigurationProperties({KakaoProperties.class, PortOneProperties.class, GeminiProperties.class})
 public class SsupickBeApplication {
 
     public static void main(String[] args) {
