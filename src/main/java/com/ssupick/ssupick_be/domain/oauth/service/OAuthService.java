@@ -10,6 +10,7 @@ import com.ssupick.ssupick_be.domain.oauth.dto.request.OAuthKakaoLoginRequest;
 import com.ssupick.ssupick_be.domain.oauth.dto.response.OAuthLoginResponse;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
+import com.ssupick.ssupick_be.domain.user.service.RandomNicknameGenerator;
 import com.ssupick.ssupick_be.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class OAuthService {
     private final JwtService jwtService;
     private final OAuthKakaoClient oAuthKakaoClient;
     private final AiImageRepository aiImageRepository;
+    private final RandomNicknameGenerator randomNicknameGenerator;
 
     // 외부 API 호출은 트랜잭션 밖에서 수행합니다.
     // DB 작업은 UserService.findOrRegisterKakaoUser의 @Transactional에 위임합니다.
@@ -48,6 +50,7 @@ public class OAuthService {
         User user = userService.findOrRegisterKakaoUser(kakaoId, email, name, profileUrl, deviceType);
         TokenIssuance tokens = jwtService.issueTokens(user);
         boolean aiImageGenerated = aiImageRepository.existsByUserAndSelectedTrue(user);
-        return OAuthLoginResponse.of(user, tokens.accessToken(), tokens.refreshToken(), aiImageGenerated);
+        String randomNickname = randomNicknameGenerator.generate();
+        return OAuthLoginResponse.of(user, tokens.accessToken(), tokens.refreshToken(), aiImageGenerated, randomNickname);
     }
 }

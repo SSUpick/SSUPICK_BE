@@ -9,17 +9,19 @@ public record LoginResponse(
         String refreshToken,
         boolean onboardingCompleted,   // 온보딩 완료 여부
         boolean aiImageGenerated,       // selected=true 이미지 존재 여부
-        int remainingCouponCount // 남은 쿠폰 개수
+        int remainingCouponCount,       // 남은 쿠폰 개수
+        String randomNickname
 ) {
     public static LoginResponse of(User user, String accessToken, String refreshToken,
-                                   boolean aiImageGenerated) {
+                                   boolean aiImageGenerated, String randomNickname) {
         return new LoginResponse(
                 user.getId(),
                 accessToken,
                 refreshToken,
                 user.getOnboardingStatus() == OnboardingStatus.COMPLETED,
                 aiImageGenerated,
-                user.getRemainingCouponCount()
+                user.getRemainingCouponCount(),
+                randomNickname
         );
     }
 }

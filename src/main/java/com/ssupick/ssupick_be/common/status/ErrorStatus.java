@@ -59,6 +59,7 @@ public enum ErrorStatus implements BaseStatus {
     NICKNAME_PROFANITY_DETECTED(HttpStatus.BAD_REQUEST, "USER_400_3", "닉네임에 사용할 수 없는 표현이 포함되어 있습니다."),
     APPEAL_PROFANITY_DETECTED(HttpStatus.BAD_REQUEST, "USER_400_4", "어필 항목에 사용할 수 없는 표현이 포함되어 있습니다."),
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409_2", "이미 사용 중인 닉네임입니다."),
+    NICKNAME_GENERATION_FAILED(HttpStatus.CONFLICT, "USER_409_3", "사용 가능한 랜덤 닉네임을 생성할 수 없습니다."),
 
     /**
      * AI Image

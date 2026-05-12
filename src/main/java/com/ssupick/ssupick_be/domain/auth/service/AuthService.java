@@ -10,6 +10,7 @@ import com.ssupick.ssupick_be.domain.auth.dto.request.LoginRequest;
 import com.ssupick.ssupick_be.domain.auth.dto.response.LoginResponse;
 import com.ssupick.ssupick_be.domain.auth.dto.response.ReissueResponse;
 import com.ssupick.ssupick_be.domain.user.entity.User;
+import com.ssupick.ssupick_be.domain.user.service.RandomNicknameGenerator;
 import com.ssupick.ssupick_be.domain.user.service.UserService;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final AiImageRepository aiImageRepository;
     private final AiImageService aiImageService;
+    private final RandomNicknameGenerator randomNicknameGenerator;
 
     @Value("${test.secret-key}")
     private String testSecretKey;
@@ -46,8 +48,9 @@ public class AuthService {
         User user = userService.findOrCreateTestUser(request.testUserId(), request.deviceType());
         TokenIssuance tokens = jwtService.issueTokens(user);
         boolean aiImageGenerated = aiImageRepository.existsByUserAndSelectedTrue(user);
+        String randomNickname = randomNicknameGenerator.generate();
 
-        return LoginResponse.of(user, tokens.accessToken(), tokens.refreshToken(), aiImageGenerated);
+        return LoginResponse.of(user, tokens.accessToken(), tokens.refreshToken(), aiImageGenerated, randomNickname);
     }
 
     @Transactional
