@@ -117,13 +117,13 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<GetUserCardResponse> getUserCardList(Long userId) {
         if (userId == null) {
-            return userRepository.findAllByOnboardingStatus(OnboardingStatus.COMPLETED)
+            return userRepository.findAllByOnboardingStatusOrderByUpdatedAtDesc(OnboardingStatus.COMPLETED)
                     .stream()
                     .map(GetUserCardResponse::from)
                     .toList();
         }
 
-        return userRepository.findAllByOnboardingStatusAndIdNot(
+        return userRepository.findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(
                         OnboardingStatus.COMPLETED, userId)
                 .stream()
                 .map(GetUserCardResponse::from)

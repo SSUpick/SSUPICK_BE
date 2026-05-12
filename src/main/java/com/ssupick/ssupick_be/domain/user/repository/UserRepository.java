@@ -16,10 +16,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByOauthIdAndOauthProvider(String oauthId, OAuthProvider oauthProvider);
 
     // 온보딩 완료 유저 전체 조회
-    List<User> findAllByOnboardingStatus(OnboardingStatus onboardingStatus);
+    List<User> findAllByOnboardingStatusOrderByUpdatedAtDesc(OnboardingStatus onboardingStatus);
 
     // 온보딩 완료 유저 중 본인 제외 전체 조회
-    List<User> findAllByOnboardingStatusAndIdNot(OnboardingStatus onboardingStatus, Long excludeId);
+    List<User> findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(OnboardingStatus onboardingStatus, Long excludeId);
 
     @Query("""
             SELECT u
