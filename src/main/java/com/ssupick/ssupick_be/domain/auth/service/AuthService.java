@@ -45,11 +45,11 @@ public class AuthService {
             throw new GeneralException(ErrorStatus.FORBIDDEN);
         }
 
-        User user = userService.findOrCreateTestUser(request.testUserId(), request.deviceType());
+        String randomNickname = randomNicknameGenerator.generate();
+        User user = userService.findOrCreateTestUser(request.testUserId(), request.deviceType(), randomNickname);
         boolean firstLogin = user.isFirstLogin();
         TokenIssuance tokens = jwtService.issueTokens(user);
         boolean aiImageGenerated = aiImageRepository.existsByUserAndSelectedTrue(user);
-        String randomNickname = randomNicknameGenerator.generate();
         user.completeFirstLogin();
 
         return LoginResponse.of(

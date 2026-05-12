@@ -60,19 +60,19 @@ public class UserService {
     // 카카오 유저 조회 후 없으면 신규 생성
     @Transactional
     public User findOrRegisterKakaoUser(
-            String kakaoId, String email, String name, String profileUrl, DeviceType deviceType
+            String kakaoId, String email, String name, String profileUrl, DeviceType deviceType, String randomNickname
     ) {
         return userRepository.findByOauthIdAndOauthProvider(kakaoId, OAuthProvider.KAKAO)
                 .orElseGet(() ->
-                        userRepository.save(User.createKakaoUser(kakaoId, email, name, profileUrl, deviceType))
+                        userRepository.save(User.createKakaoUser(kakaoId, email, name, profileUrl, deviceType, randomNickname))
                 );
     }
 
     // 테스트 유저 조회 후 없으면 신규 생성
     @Transactional
-    public User findOrCreateTestUser(String testUserId, DeviceType deviceType) {
+    public User findOrCreateTestUser(String testUserId, DeviceType deviceType,String randomNickname) {
         return userRepository.findByOauthIdAndOauthProvider(testUserId, OAuthProvider.TEST)
-                .orElseGet(() -> userRepository.save(User.createTestUser(testUserId, deviceType)));
+                .orElseGet(() -> userRepository.save(User.createTestUser(testUserId, deviceType, randomNickname)));
     }
 
     // 상대 유저 프로필 조회 — 첫 열람만 쿠폰 차감 + 열람 기록 upsert

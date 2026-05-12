@@ -92,7 +92,7 @@ public class User extends BaseEntity {
 
     // 카카오 신규 유저 생성
     public static User createKakaoUser(
-            String oauthId, String email, String name, String profileUrl, DeviceType deviceType
+            String oauthId, String email, String name, String profileUrl, DeviceType deviceType, String randomNickname
     ) {
         return User.builder()
                 .oauthId(oauthId)
@@ -102,11 +102,12 @@ public class User extends BaseEntity {
                 .profileUrl(profileUrl)
                 .deviceType(deviceType)
                 .onboardingStatus(OnboardingStatus.INCOMPLETE)
+                .nickname(randomNickname)
                 .build();
     }
 
     // 테스트 유저 생성 (로컬 전용)
-    public static User createTestUser(String testUserId, DeviceType deviceType) {
+    public static User createTestUser(String testUserId, DeviceType deviceType, String randomNickname) {
         return User.builder()
                 .oauthId(testUserId)
                 .oauthProvider(OAuthProvider.TEST)
@@ -114,6 +115,7 @@ public class User extends BaseEntity {
                 .name("테스트유저_" + testUserId)
                 .deviceType(deviceType)
                 .onboardingStatus(OnboardingStatus.INCOMPLETE)
+                .nickname(randomNickname)
                 .build();
     }
 
