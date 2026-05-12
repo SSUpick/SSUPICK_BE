@@ -99,7 +99,7 @@ public class User extends BaseEntity {
                 .oauthProvider(OAuthProvider.KAKAO)
                 .email(email)
                 .name(name)
-                .profileUrl(profileUrl)
+                .profileUrl(null)
                 .deviceType(deviceType)
                 .onboardingStatus(OnboardingStatus.INCOMPLETE)
                 .nickname(randomNickname)
