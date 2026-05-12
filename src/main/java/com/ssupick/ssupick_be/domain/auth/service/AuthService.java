@@ -46,11 +46,20 @@ public class AuthService {
         }
 
         User user = userService.findOrCreateTestUser(request.testUserId(), request.deviceType());
+        boolean firstLogin = user.isFirstLogin();
         TokenIssuance tokens = jwtService.issueTokens(user);
         boolean aiImageGenerated = aiImageRepository.existsByUserAndSelectedTrue(user);
         String randomNickname = randomNicknameGenerator.generate();
+        user.completeFirstLogin();
 
-        return LoginResponse.of(user, tokens.accessToken(), tokens.refreshToken(), aiImageGenerated, randomNickname);
+        return LoginResponse.of(
+                user,
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                aiImageGenerated,
+                randomNickname,
+                firstLogin
+        );
     }
 
     @Transactional

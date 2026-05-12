@@ -86,6 +86,10 @@ public class User extends BaseEntity {
     @Column(name = "remaining_coupon_count", nullable = false)
     private int remainingCouponCount = 0;
 
+    @Builder.Default
+    @Column(name = "first_login", nullable = false)
+    private boolean firstLogin = true;
+
     // 카카오 신규 유저 생성
     public static User createKakaoUser(
             String oauthId, String email, String name, String profileUrl, DeviceType deviceType
@@ -155,6 +159,10 @@ public class User extends BaseEntity {
     // 리프레시 토큰 업데이트
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public void completeFirstLogin() {
+        this.firstLogin = false;
     }
 
     // AI 이미지 생성 횟수 차감 — 0 이하면 예외

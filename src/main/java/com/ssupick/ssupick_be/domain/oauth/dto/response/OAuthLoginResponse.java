@@ -9,17 +9,19 @@ public record OAuthLoginResponse(
         String refreshToken,
         boolean onboardingCompleted,   // 온보딩 완료 여부
         boolean aiImageGenerated,      // selected=true 이미지 존재 여부
-        String randomNickname
+        String randomNickname,
+        boolean firstLogin
 ) {
     public static OAuthLoginResponse of(User user, String accessToken, String refreshToken,
-                                        boolean aiImageGenerated, String randomNickname) {
+                                        boolean aiImageGenerated, String randomNickname, boolean firstLogin) {
         return new OAuthLoginResponse(
                 user.getId(),
                 accessToken,
                 refreshToken,
                 user.getOnboardingStatus() == OnboardingStatus.COMPLETED,
                 aiImageGenerated,
-                randomNickname
+                randomNickname,
+                firstLogin
         );
     }
 }

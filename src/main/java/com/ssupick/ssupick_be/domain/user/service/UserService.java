@@ -3,7 +3,9 @@ package com.ssupick.ssupick_be.domain.user.service;
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.filter.ProfanityFilter;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
+import com.ssupick.ssupick_be.domain.admin.repository.AdminCouponAdjustmentRepository;
 import com.ssupick.ssupick_be.domain.aiimage.service.AiImageService;
+import com.ssupick.ssupick_be.domain.bank.repository.BankDepositEventRepository;
 import com.ssupick.ssupick_be.domain.payment.service.PaymentService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
@@ -31,6 +33,8 @@ public class UserService {
     private final ProfileViewRepository profileViewRepository;
     private final ProfanityFilter profanityFilter;
     private final PaymentService paymentService;
+    private final AdminCouponAdjustmentRepository adminCouponAdjustmentRepository;
+    private final BankDepositEventRepository bankDepositEventRepository;
 
     // ───────────────────────────── 공통 내부 헬퍼 ─────────────────────────────
 
@@ -197,6 +201,8 @@ public class UserService {
         aiImageService.deleteByUser(user);
         paymentService.deleteByUser(user);
         deleteProfileView(user);
+        adminCouponAdjustmentRepository.deleteAllByUser(user);
+        bankDepositEventRepository.clearMatchedUser(user);
         userRepository.delete(user);
     }
     // 유저 관련 열람 기록 삭제
