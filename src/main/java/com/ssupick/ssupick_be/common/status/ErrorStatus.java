@@ -58,6 +58,7 @@ public enum ErrorStatus implements BaseStatus {
     SELF_VIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "USER_400_2", "자기 자신의 프로필은 열람할 수 없습니다."),
     NICKNAME_PROFANITY_DETECTED(HttpStatus.BAD_REQUEST, "USER_400_3", "닉네임에 사용할 수 없는 표현이 포함되어 있습니다."),
     APPEAL_PROFANITY_DETECTED(HttpStatus.BAD_REQUEST, "USER_400_4", "어필 항목에 사용할 수 없는 표현이 포함되어 있습니다."),
+    NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409_2", "이미 사용 중인 닉네임입니다."),
 
     /**
      * AI Image

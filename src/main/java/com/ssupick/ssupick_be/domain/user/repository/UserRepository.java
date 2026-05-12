@@ -21,6 +21,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // 온보딩 완료 유저 중 본인 제외 전체 조회
     List<User> findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(OnboardingStatus onboardingStatus, Long excludeId);
 
+    boolean existsByNickname(String nickname);
+
+    boolean existsByNicknameAndIdNot(String nickname, Long excludeId);
+
     @Query("""
             SELECT u
             FROM User u

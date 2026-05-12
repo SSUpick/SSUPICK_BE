@@ -4,10 +4,12 @@ import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.ValidateNicknameRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetTargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetProfileViewListResponse;
+import com.ssupick.ssupick_be.domain.user.dto.response.ValidateNicknameResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,6 +62,23 @@ public interface UserControllerDocs {
     })
     ResponseEntity<ApiResponse<List<GetUserCardResponse>>> getUserCardList(
             @Parameter(hidden = true) @AuthenticationPrincipal Long userId
+    );
+
+    @Operation(
+            summary = "닉네임 검증",
+            description = "닉네임의 길이, 비속어 포함 여부, 중복 여부를 검증합니다. 최대 10자까지 사용할 수 있습니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용 가능한 닉네임",
+                    content = @Content(schema = @Schema(implementation = ValidateNicknameResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 또는 비속어 포함",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 사용 중인 닉네임",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
+    ResponseEntity<ApiResponse<ValidateNicknameResponse>> validateNickname(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid ValidateNicknameRequest request
     );
 
     @Operation(

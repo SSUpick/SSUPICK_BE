@@ -8,6 +8,7 @@ import com.ssupick.ssupick_be.domain.payment.service.PaymentService;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.ValidateNicknameRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
@@ -37,6 +38,17 @@ public class UserService {
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+    }
+
+    private void validateNickname(String nickname, Long excludeUserId) {
+        profanityFilter.validateNickname(nickname);
+
+        boolean exists = excludeUserId == null
+                ? userRepository.existsByNickname(nickname)
+                : userRepository.existsByNicknameAndIdNot(nickname, excludeUserId);
+        if (exists) {
+            throw new GeneralException(ErrorStatus.NICKNAME_ALREADY_EXISTS);
+        }
     }
 
     // ───────────────────────────── Public API ─────────────────────────────────
@@ -108,9 +120,16 @@ public class UserService {
         if (request.appeals() == null || request.appeals().stream().anyMatch(a -> a == null || a.isBlank())) {
             throw new GeneralException(ErrorStatus.INVALID_APPEAL_CONTENT);
         }
-        profanityFilter.validateNickname(request.nickname());
+        validateNickname(request.nickname(), userId);
         profanityFilter.validateAppeals(request.appeals());
         user.completeOnboarding(request.nickname(), request.mbti(), request.contact(), request.appeals(), request.gender());
+    }
+
+    // 닉네임 검증 — 비속어, 중복 여부 검사
+    @Transactional(readOnly = true)
+    public ValidateNicknameResponse validateNickname(Long userId, ValidateNicknameRequest request) {
+        validateNickname(request.nickname(), userId);
+        return ValidateNicknameResponse.ofAvailable();
     }
 
     // 유저 카드 리스트 조회 — 비인증 요청이면 전체 반환, 인증 요청이면 본인 제외
@@ -154,7 +173,7 @@ public class UserService {
         if (user.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
             throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
         }
-        profanityFilter.validateNickname(request.nickname());
+        validateNickname(request.nickname(), userId);
         profanityFilter.validateAppeals(request.appeals());
         user.updateProfile(request.toCommand());
     }

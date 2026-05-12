@@ -6,10 +6,12 @@ import com.ssupick.ssupick_be.domain.user.controller.docs.UserControllerDocs;
 import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
+import com.ssupick.ssupick_be.domain.user.dto.request.ValidateNicknameRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetTargetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserCardResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetUserProfileResponse;
 import com.ssupick.ssupick_be.domain.user.dto.response.GetProfileViewListResponse;
+import com.ssupick.ssupick_be.domain.user.dto.response.ValidateNicknameResponse;
 import com.ssupick.ssupick_be.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,16 @@ public class UserController implements UserControllerDocs {
     ) {
         List<GetUserCardResponse> response = userService.getUserCardList(userId);
         return ApiResponse.success(SuccessStatus.GET_USER_CARD_LIST_SUCCESS, response);
+    }
+
+    @PostMapping("/nickname/validate")
+    @Override
+    public ResponseEntity<ApiResponse<ValidateNicknameResponse>> validateNickname(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid ValidateNicknameRequest request
+    ) {
+        ValidateNicknameResponse response = userService.validateNickname(userId, request);
+        return ApiResponse.success(SuccessStatus.VALIDATE_NICKNAME_SUCCESS, response);
     }
 
     @GetMapping("/me")
