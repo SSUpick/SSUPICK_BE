@@ -4,8 +4,10 @@ import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.common.status.SuccessStatus;
 import com.ssupick.ssupick_be.domain.admin.controller.docs.AdminControllerDocs;
 import com.ssupick.ssupick_be.domain.admin.dto.request.AdminCouponAddRequest;
+import com.ssupick.ssupick_be.domain.admin.dto.request.AdminGenerationCountSetRequest;
 import com.ssupick.ssupick_be.domain.admin.dto.request.AdminLoginRequest;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminCouponAddResponse;
+import com.ssupick.ssupick_be.domain.admin.dto.response.AdminGenerationCountSetResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminLoginResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminUserSearchResponse;
 import com.ssupick.ssupick_be.domain.admin.service.AdminService;
@@ -54,6 +56,15 @@ public class AdminController implements AdminControllerDocs {
     ) {
         AdminCouponAddResponse response = adminService.addCoupon(request);
         return ApiResponse.success(SuccessStatus.ADMIN_COUPON_ADD_SUCCESS, response);
+    }
+
+    @PatchMapping("/generation-count")
+    @Override
+    public ResponseEntity<ApiResponse<AdminGenerationCountSetResponse>> setGenerationCount(
+            @Valid @RequestBody AdminGenerationCountSetRequest request
+    ) {
+        AdminGenerationCountSetResponse response = adminService.setGenerationCount(request);
+        return ApiResponse.success(SuccessStatus.ADMIN_GENERATION_COUNT_SET_SUCCESS, response);
     }
 
     @GetMapping("/deposit-events")

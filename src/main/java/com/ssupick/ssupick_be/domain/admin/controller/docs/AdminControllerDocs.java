@@ -2,8 +2,10 @@ package com.ssupick.ssupick_be.domain.admin.controller.docs;
 
 import com.ssupick.ssupick_be.common.response.ApiResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.request.AdminCouponAddRequest;
+import com.ssupick.ssupick_be.domain.admin.dto.request.AdminGenerationCountSetRequest;
 import com.ssupick.ssupick_be.domain.admin.dto.request.AdminLoginRequest;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminCouponAddResponse;
+import com.ssupick.ssupick_be.domain.admin.dto.response.AdminGenerationCountSetResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminLoginResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminUserSearchResponse;
 import com.ssupick.ssupick_be.domain.bank.dto.request.BankDepositAssignRequest;
@@ -86,6 +88,31 @@ public interface AdminControllerDocs {
     })
     ResponseEntity<ApiResponse<AdminCouponAddResponse>> addCoupon(
             @Valid @RequestBody AdminCouponAddRequest request
+    );
+
+    @Operation(
+            summary = "관리자 이미지 생성 횟수 수동 설정",
+            description = "관리자가 유저 닉네임으로 유저를 찾아 이미지 생성 잔여 횟수를 지정한 값으로 설정합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "관리자 이미지 생성 횟수 설정 성공",
+                    content = @Content(schema = @Schema(implementation = AdminGenerationCountSetResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (닉네임 누락, 생성 횟수 음수)",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "유저 없음",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    ResponseEntity<ApiResponse<AdminGenerationCountSetResponse>> setGenerationCount(
+            @Valid @RequestBody AdminGenerationCountSetRequest request
     );
 
     @Operation(

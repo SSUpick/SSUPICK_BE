@@ -194,6 +194,11 @@ public class User extends BaseEntity {
         }
     }
 
+    // 관리자 수동 설정
+    public void updateRemainingGenerationCount(int remainingGenerationCount) {
+        this.remainingGenerationCount = remainingGenerationCount;
+    }
+
     // 최종 선택 이미지를 프로필 URL로 확정
     public void updateProfileUrl(String profileUrl) {
         this.profileUrl = profileUrl;

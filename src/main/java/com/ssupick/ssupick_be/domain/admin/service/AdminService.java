@@ -5,8 +5,10 @@ import com.ssupick.ssupick_be.common.discord.DiscordNotificationService;
 import com.ssupick.ssupick_be.common.jwt.JwtService;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.admin.dto.request.AdminCouponAddRequest;
+import com.ssupick.ssupick_be.domain.admin.dto.request.AdminGenerationCountSetRequest;
 import com.ssupick.ssupick_be.domain.admin.dto.request.AdminLoginRequest;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminCouponAddResponse;
+import com.ssupick.ssupick_be.domain.admin.dto.response.AdminGenerationCountSetResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminLoginResponse;
 import com.ssupick.ssupick_be.domain.admin.dto.response.AdminUserSearchResponse;
 import com.ssupick.ssupick_be.domain.admin.entity.AdminCouponAdjustment;
@@ -87,6 +89,15 @@ public class AdminService {
                 user
         );
         return AdminCouponAddResponse.from(savedAdjustment);
+    }
+
+    @Transactional
+    public AdminGenerationCountSetResponse setGenerationCount(AdminGenerationCountSetRequest request) {
+        User user = userRepository.findByNickname(request.nickname().trim())
+                .orElseThrow(() -> new GeneralException(ErrorStatus.USER_NOT_FOUND));
+
+        user.updateRemainingGenerationCount(request.remainingGenerationCount());
+        return AdminGenerationCountSetResponse.from(user);
     }
 
     private boolean matches(String expected, String actual) {
