@@ -15,11 +15,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByOauthIdAndOauthProvider(String oauthId, OAuthProvider oauthProvider);
 
-    // 온보딩 완료 유저 전체 조회
-    List<User> findAllByOnboardingStatusOrderByUpdatedAtDesc(OnboardingStatus onboardingStatus);
+    // 전체 유저 조회
+    List<User> findAllByOrderByUpdatedAtDesc();
 
-    // 온보딩 완료 유저 중 본인 제외 전체 조회
-    List<User> findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(OnboardingStatus onboardingStatus, Long excludeId);
+    // 전체 유저 중 본인 제외 조회
+    List<User> findAllByIdNotOrderByUpdatedAtDesc(Long excludeId);
 
     boolean existsByNickname(String nickname);
 

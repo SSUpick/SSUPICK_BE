@@ -170,12 +170,8 @@ class UserServiceTest {
     // 상대 프로필 첫 열람이면 열람 기록을 생성하고 쿠폰을 1개 차감합니다.
     @Test
     void getTargetUserProfile_decreasesCouponOnFirstView() {
-        User viewer = User.createTestUser("viewer", DeviceType.IOS);
-        viewer.updateProfileUrl("viewer-profile.jpg");
         User target = User.createTestUser("target", DeviceType.IOS);
-        target.completeOnboarding("target", "INTJ", "@target", List.of("청순"), Gender.FEMALE);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(viewer));
         when(userRepository.findById(2L)).thenReturn(Optional.of(target));
         when(profileViewRepository.insertIgnoreProfileView(1L, 2L)).thenReturn(1);
         when(userRepository.decreaseCouponCount(1L)).thenReturn(1);
@@ -190,12 +186,8 @@ class UserServiceTest {
     // 상대 프로필 재열람이면 열람 시간만 갱신하고 쿠폰은 차감하지 않습니다.
     @Test
     void getTargetUserProfile_doesNotDecreaseCouponOnRepeatedView() {
-        User viewer = User.createTestUser("viewer", DeviceType.IOS);
-        viewer.updateProfileUrl("viewer-profile.jpg");
         User target = User.createTestUser("target", DeviceType.IOS);
-        target.completeOnboarding("target", "INTJ", "@target", List.of("청순"), Gender.FEMALE);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(viewer));
         when(userRepository.findById(2L)).thenReturn(Optional.of(target));
         when(profileViewRepository.insertIgnoreProfileView(1L, 2L)).thenReturn(0);
 
@@ -209,12 +201,8 @@ class UserServiceTest {
     // 첫 열람이지만 쿠폰이 부족하면 예외를 던집니다.
     @Test
     void getTargetUserProfile_throwsWhenFirstViewCouponIsInsufficient() {
-        User viewer = User.createTestUser("viewer", DeviceType.IOS);
-        viewer.updateProfileUrl("viewer-profile.jpg");
         User target = User.createTestUser("target", DeviceType.IOS);
-        target.completeOnboarding("target", "INTJ", "@target", List.of("청순"), Gender.FEMALE);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(viewer));
         when(userRepository.findById(2L)).thenReturn(Optional.of(target));
         when(profileViewRepository.insertIgnoreProfileView(1L, 2L)).thenReturn(1);
         when(userRepository.decreaseCouponCount(1L)).thenReturn(0);
@@ -236,6 +224,32 @@ class UserServiceTest {
 
         verifyNoInteractions(profileViewRepository);
         verify(userRepository, never()).decreaseCouponCount(1L);
+    }
+
+    // 유저 카드 리스트는 온보딩 완료 여부와 무관하게 전체 유저를 반환하고, 로그인한 유저만 본인을 제외합니다.
+    @Test
+    void getUserCardList_returnsAllUsersWithoutOnboardingFilter() {
+        User first = User.createTestUser("first", DeviceType.IOS);
+        User second = User.createTestUser("second", DeviceType.IOS);
+
+        when(userRepository.findAllByOrderByUpdatedAtDesc()).thenReturn(List.of(first, second));
+
+        userService.getUserCardList(null);
+
+        verify(userRepository).findAllByOrderByUpdatedAtDesc();
+    }
+
+    // 로그인한 유저가 있으면 본인만 제외하고 전체 유저를 반환합니다.
+    @Test
+    void getUserCardList_excludesOnlySelfWhenAuthenticated() {
+        User first = User.createTestUser("first", DeviceType.IOS);
+        User second = User.createTestUser("second", DeviceType.IOS);
+
+        when(userRepository.findAllByIdNotOrderByUpdatedAtDesc(1L)).thenReturn(List.of(second));
+
+        userService.getUserCardList(1L);
+
+        verify(userRepository).findAllByIdNotOrderByUpdatedAtDesc(1L);
     }
 
     // 탈퇴 이력이 없는 카카오 신규 유저는 기본 이미지 생성 횟수 3회로 생성됩니다.

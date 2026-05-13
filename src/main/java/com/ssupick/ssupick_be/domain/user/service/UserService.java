@@ -89,17 +89,7 @@ public class UserService {
             throw new GeneralException(ErrorStatus.SELF_VIEW_NOT_ALLOWED);
         }
 
-        // 프로필 등록 여부 검사
-        User viewer = getUserOrThrow(viewerId);
-        if (viewer.getProfileUrl() == null || viewer.getProfileUrl().isBlank()) {
-            throw new GeneralException(ErrorStatus.USER_PROFILE_INCOMPLETE);
-        }
-
-        // 온보딩 완료 여부 검사
         User target = getUserOrThrow(targetId);
-        if (target.getOnboardingStatus() != OnboardingStatus.COMPLETED) {
-            throw new GeneralException(ErrorStatus.USER_ONBOARDING_INCOMPLETE);
-        }
 
         int inserted = profileViewRepository.insertIgnoreProfileView(viewerId, targetId);
         if (inserted == 0) {
@@ -147,14 +137,13 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<GetUserCardResponse> getUserCardList(Long userId) {
         if (userId == null) {
-            return userRepository.findAllByOnboardingStatusOrderByUpdatedAtDesc(OnboardingStatus.COMPLETED)
+            return userRepository.findAllByOrderByUpdatedAtDesc()
                     .stream()
                     .map(GetUserCardResponse::from)
                     .toList();
         }
 
-        return userRepository.findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(
-                        OnboardingStatus.COMPLETED, userId)
+        return userRepository.findAllByIdNotOrderByUpdatedAtDesc(userId)
                 .stream()
                 .map(GetUserCardResponse::from)
                 .toList();

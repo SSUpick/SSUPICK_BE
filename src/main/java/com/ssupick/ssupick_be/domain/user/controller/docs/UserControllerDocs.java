@@ -50,7 +50,7 @@ public interface UserControllerDocs {
     @Operation(
             summary = "유저 카드 리스트 조회",
             description = """
-                    온보딩을 완료한 유저 목록을 카드 형태로 조회합니다.
+                    유저 목록을 카드 형태로 조회합니다.
                     
                     - 인증된 요청: 본인을 제외한 목록을 반환합니다.
                     - 비인증 요청: 전체 목록을 반환합니다. (토큰 없이 호출 가능)
@@ -104,7 +104,6 @@ public interface UserControllerDocs {
                     
                     - 첫 열람 시 쿠폰 1개를 차감합니다.
                     - 재열람 시 쿠폰을 차감하지 않고 열람 시간만 갱신합니다.
-                    - 탈퇴 유저 및 온보딩 미완료 유저는 조회 불가합니다.
                     - 본인 프로필은 조회 불가합니다.
                     """
     )
@@ -116,8 +115,6 @@ public interface UserControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "402", description = "쿠폰 부족",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "온보딩 미완료 유저",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
