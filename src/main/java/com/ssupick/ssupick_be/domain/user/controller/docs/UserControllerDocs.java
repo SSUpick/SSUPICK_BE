@@ -66,7 +66,7 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "닉네임 검증",
-            description = "닉네임의 길이, 비속어 포함 여부, 중복 여부를 검증합니다. 최대 10자까지 사용할 수 있습니다."
+            description = "닉네임의 길이, 비속어 포함 여부, 중복 여부를 검증합니다. 공백 포함 최대 7자까지 사용할 수 있습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "사용 가능한 닉네임",

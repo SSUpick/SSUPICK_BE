@@ -55,7 +55,7 @@ public class User extends BaseEntity {
     @Column(name = "gender", length = 10)
     private Gender gender;
 
-    @Column(name = "nickname", length = 10)
+    @Column(name = "nickname", length = 7)
     private String nickname;
 
     @Column(name = "mbti", length = 4)
