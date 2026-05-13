@@ -35,7 +35,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -166,6 +168,77 @@ class UserServiceTest {
         userService.updatePhoneNumber(1L, new UpdatePhoneNumberRequest("01012345678"));
 
         assertThat(user.getPhoneNumber()).isEqualTo("01012345678");
+    }
+
+    // 상대 프로필 첫 열람이면 열람 기록을 생성하고 쿠폰을 1개 차감합니다.
+    @Test
+    void getTargetUserProfile_decreasesCouponOnFirstView() {
+        User viewer = User.createTestUser("viewer", DeviceType.IOS);
+        viewer.updateProfileUrl("viewer-profile.jpg");
+        User target = User.createTestUser("target", DeviceType.IOS);
+        target.completeOnboarding("target", "INTJ", "@target", List.of("청순"), Gender.FEMALE);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(viewer));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(target));
+        when(profileViewRepository.insertIgnoreProfileView(1L, 2L)).thenReturn(1);
+        when(userRepository.decreaseCouponCount(1L)).thenReturn(1);
+
+        userService.getTargetUserProfile(1L, 2L);
+
+        verify(profileViewRepository).insertIgnoreProfileView(1L, 2L);
+        verify(userRepository).decreaseCouponCount(1L);
+        verify(profileViewRepository, never()).updateViewedAt(1L, 2L);
+    }
+
+    // 상대 프로필 재열람이면 열람 시간만 갱신하고 쿠폰은 차감하지 않습니다.
+    @Test
+    void getTargetUserProfile_doesNotDecreaseCouponOnRepeatedView() {
+        User viewer = User.createTestUser("viewer", DeviceType.IOS);
+        viewer.updateProfileUrl("viewer-profile.jpg");
+        User target = User.createTestUser("target", DeviceType.IOS);
+        target.completeOnboarding("target", "INTJ", "@target", List.of("청순"), Gender.FEMALE);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(viewer));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(target));
+        when(profileViewRepository.insertIgnoreProfileView(1L, 2L)).thenReturn(0);
+
+        userService.getTargetUserProfile(1L, 2L);
+
+        verify(profileViewRepository).insertIgnoreProfileView(1L, 2L);
+        verify(profileViewRepository).updateViewedAt(1L, 2L);
+        verify(userRepository, never()).decreaseCouponCount(1L);
+    }
+
+    // 첫 열람이지만 쿠폰이 부족하면 예외를 던집니다.
+    @Test
+    void getTargetUserProfile_throwsWhenFirstViewCouponIsInsufficient() {
+        User viewer = User.createTestUser("viewer", DeviceType.IOS);
+        viewer.updateProfileUrl("viewer-profile.jpg");
+        User target = User.createTestUser("target", DeviceType.IOS);
+        target.completeOnboarding("target", "INTJ", "@target", List.of("청순"), Gender.FEMALE);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(viewer));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(target));
+        when(profileViewRepository.insertIgnoreProfileView(1L, 2L)).thenReturn(1);
+        when(userRepository.decreaseCouponCount(1L)).thenReturn(0);
+
+        assertThatThrownBy(() -> userService.getTargetUserProfile(1L, 2L))
+                .isInstanceOfSatisfying(GeneralException.class, e ->
+                        assertThat(e.getErrorStatus()).isEqualTo(ErrorStatus.PROFILE_VIEW_COUPON_REQUIRED));
+
+        verify(profileViewRepository).insertIgnoreProfileView(1L, 2L);
+        verify(userRepository).decreaseCouponCount(1L);
+    }
+
+    // 본인 프로필 조회는 열람 기록 생성이나 쿠폰 차감 전에 차단합니다.
+    @Test
+    void getTargetUserProfile_throwsBeforeCouponLogicWhenViewingSelf() {
+        assertThatThrownBy(() -> userService.getTargetUserProfile(1L, 1L))
+                .isInstanceOfSatisfying(GeneralException.class, e ->
+                        assertThat(e.getErrorStatus()).isEqualTo(ErrorStatus.SELF_VIEW_NOT_ALLOWED));
+
+        verifyNoInteractions(profileViewRepository);
+        verify(userRepository, never()).decreaseCouponCount(1L);
     }
 
     // 탈퇴 이력이 없는 카카오 신규 유저는 기본 이미지 생성 횟수 3회로 생성됩니다.
