@@ -11,6 +11,7 @@ import com.ssupick.ssupick_be.domain.oauth.dto.response.OAuthLoginResponse;
 import com.ssupick.ssupick_be.domain.oauth.enums.RedirectType;
 import com.ssupick.ssupick_be.domain.user.entity.User;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
+import com.ssupick.ssupick_be.domain.user.service.RandomNicknameGenerator;
 import com.ssupick.ssupick_be.domain.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,9 @@ class OAuthServiceTest {
     @Mock
     private AiImageRepository aiImageRepository;
 
+    @Mock
+    private RandomNicknameGenerator randomNicknameGenerator;
+
     @InjectMocks
     private OAuthService oAuthService;
 
@@ -63,8 +67,9 @@ class OAuthServiceTest {
 
         when(oAuthKakaoClient.getKakaoToken("auth-code", RedirectType.PROD)).thenReturn(KAKAO_TOKEN);
         when(oAuthKakaoClient.getKakaoUserInfo("kakao-access-token")).thenReturn(userInfo);
+        when(randomNicknameGenerator.generate()).thenReturn("랜덤닉네임");
         when(userService.findOrRegisterKakaoUser(
-                "12345", "test@test.com", "테스트", "https://profile.jpg", DeviceType.IOS
+                "12345", "test@test.com", "테스트", "https://profile.jpg", DeviceType.IOS, "랜덤닉네임"
         )).thenReturn(user);
         when(jwtService.issueTokens(user)).thenReturn(new TokenIssuance("access-token", "refresh-token"));
         when(aiImageRepository.existsByUserAndSelectedTrue(user)).thenReturn(false);
@@ -89,13 +94,16 @@ class OAuthServiceTest {
 
         when(oAuthKakaoClient.getKakaoToken(any(), any())).thenReturn(KAKAO_TOKEN);
         when(oAuthKakaoClient.getKakaoUserInfo(any())).thenReturn(userInfo);
-        when(userService.findOrRegisterKakaoUser(any(), any(), any(), any(), any())).thenReturn(user);
+        when(randomNicknameGenerator.generate()).thenReturn("랜덤닉네임");
+        when(userService.findOrRegisterKakaoUser(any(), any(), any(), any(), any(), any())).thenReturn(user);
         when(jwtService.issueTokens(user)).thenReturn(new TokenIssuance("access-token", "refresh-token"));
         when(aiImageRepository.existsByUserAndSelectedTrue(user)).thenReturn(false);
 
         oAuthService.kakaoLogin(REQUEST);
 
-        verify(userService).findOrRegisterKakaoUser("12345", "test@test.com", "테스트", "https://profile.jpg", DeviceType.IOS);
+        verify(userService).findOrRegisterKakaoUser(
+                "12345", "test@test.com", "테스트", "https://profile.jpg", DeviceType.IOS, "랜덤닉네임"
+        );
         verify(jwtService).issueTokens(user);
     }
 
@@ -107,7 +115,7 @@ class OAuthServiceTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> oAuthService.kakaoLogin(REQUEST))
                 .isInstanceOf(RuntimeException.class);
 
-        verify(userService, never()).findOrRegisterKakaoUser(anyString(), any(), any(), any(), any());
+        verify(userService, never()).findOrRegisterKakaoUser(anyString(), any(), any(), any(), any(), any());
     }
 
     // 카카오 유저 정보 조회 실패 시 UserService를 호출하지 않습니다.
@@ -119,7 +127,7 @@ class OAuthServiceTest {
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> oAuthService.kakaoLogin(REQUEST))
                 .isInstanceOf(RuntimeException.class);
 
-        verify(userService, never()).findOrRegisterKakaoUser(anyString(), any(), any(), any(), any());
+        verify(userService, never()).findOrRegisterKakaoUser(anyString(), any(), any(), any(), any(), any());
     }
 
     // AI 이미지가 생성된 경우 aiImageGenerated가 true로 반환됩니다.
@@ -134,7 +142,8 @@ class OAuthServiceTest {
 
         when(oAuthKakaoClient.getKakaoToken(any(), any())).thenReturn(KAKAO_TOKEN);
         when(oAuthKakaoClient.getKakaoUserInfo(any())).thenReturn(userInfo);
-        when(userService.findOrRegisterKakaoUser(any(), any(), any(), any(), any())).thenReturn(user);
+        when(randomNicknameGenerator.generate()).thenReturn("랜덤닉네임");
+        when(userService.findOrRegisterKakaoUser(any(), any(), any(), any(), any(), any())).thenReturn(user);
         when(jwtService.issueTokens(user)).thenReturn(new TokenIssuance("access-token", "refresh-token"));
         when(aiImageRepository.existsByUserAndSelectedTrue(user)).thenReturn(true);
 

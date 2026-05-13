@@ -94,6 +94,13 @@ public class User extends BaseEntity {
     public static User createKakaoUser(
             String oauthId, String email, String name, String profileUrl, DeviceType deviceType, String randomNickname
     ) {
+        return createKakaoUser(oauthId, email, name, profileUrl, deviceType, randomNickname, 3);
+    }
+
+    public static User createKakaoUser(
+            String oauthId, String email, String name, String profileUrl, DeviceType deviceType,
+            String randomNickname, int remainingGenerationCount
+    ) {
         return User.builder()
                 .oauthId(oauthId)
                 .oauthProvider(OAuthProvider.KAKAO)
@@ -103,10 +110,15 @@ public class User extends BaseEntity {
                 .deviceType(deviceType)
                 .onboardingStatus(OnboardingStatus.INCOMPLETE)
                 .nickname(randomNickname)
+                .remainingGenerationCount(remainingGenerationCount)
                 .build();
     }
 
     // 테스트 유저 생성 (로컬 전용)
+    public static User createTestUser(String testUserId, DeviceType deviceType) {
+        return createTestUser(testUserId, deviceType, "테스트닉네임");
+    }
+
     public static User createTestUser(String testUserId, DeviceType deviceType, String randomNickname) {
         return User.builder()
                 .oauthId(testUserId)

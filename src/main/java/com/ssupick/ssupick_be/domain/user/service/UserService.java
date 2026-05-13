@@ -13,11 +13,13 @@ import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.ValidateNicknameRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
 import com.ssupick.ssupick_be.domain.user.entity.User;
+import com.ssupick.ssupick_be.domain.user.entity.WithdrawUser;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
 import com.ssupick.ssupick_be.domain.user.repository.ProfileViewRepository;
 import com.ssupick.ssupick_be.domain.user.repository.UserRepository;
+import com.ssupick.ssupick_be.domain.user.repository.WithdrawUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,7 @@ public class UserService {
     private final PaymentService paymentService;
     private final AdminCouponAdjustmentRepository adminCouponAdjustmentRepository;
     private final BankDepositEventRepository bankDepositEventRepository;
+    private final WithdrawUserRepository withdrawUserRepository;
 
     // ───────────────────────────── 공통 내부 헬퍼 ─────────────────────────────
 
@@ -63,9 +66,14 @@ public class UserService {
             String kakaoId, String email, String name, String profileUrl, DeviceType deviceType, String randomNickname
     ) {
         return userRepository.findByOauthIdAndOauthProvider(kakaoId, OAuthProvider.KAKAO)
-                .orElseGet(() ->
-                        userRepository.save(User.createKakaoUser(kakaoId, email, name, profileUrl, deviceType, randomNickname))
-                );
+                .orElseGet(() -> {
+                    int initialGenerationCount = withdrawUserRepository.existsByOauthIdAndOauthProvider(
+                            kakaoId, OAuthProvider.KAKAO
+                    ) ? 0 : 3;
+                    return userRepository.save(User.createKakaoUser(
+                            kakaoId, email, name, profileUrl, deviceType, randomNickname, initialGenerationCount
+                    ));
+                });
     }
 
     // 테스트 유저 조회 후 없으면 신규 생성
@@ -198,15 +206,21 @@ public class UserService {
     // 회원 탈퇴 시 관련 데이터를 정리하고 유저를 hard delete 합니다.
     public void withdraw(Long userId) {
         User user = getUserOrThrow(userId);
+        saveWithdrawUser(user);
         aiImageService.deleteByUser(user);
         paymentService.deleteByUser(user);
-        deleteProfileView(user);
+        deleteProfileViews(user);
         adminCouponAdjustmentRepository.deleteAllByUser(user);
         bankDepositEventRepository.clearMatchedUser(user);
         userRepository.delete(user);
     }
+
+    private void saveWithdrawUser(User user) {
+        withdrawUserRepository.save(WithdrawUser.from(user));
+    }
+
     // 유저 관련 열람 기록 삭제
-    public void deleteProfileView(User user) {
+    private void deleteProfileViews(User user) {
         profileViewRepository.deleteByViewerOrTarget(user, user);
     }
 

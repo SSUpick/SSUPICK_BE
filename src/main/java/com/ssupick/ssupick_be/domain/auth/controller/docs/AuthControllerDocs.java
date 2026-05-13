@@ -88,7 +88,7 @@ public interface AuthControllerDocs {
 
     @Operation(
             summary = "회원 탈퇴",
-            description = "회원을 탈퇴 처리합니다. soft delete 방식으로 처리되며 동일 소셜 계정으로 재가입이 가능합니다."
+            description = "회원 데이터를 hard delete 처리하고 탈퇴 소셜 계정 이력을 저장합니다. 동일 소셜 계정으로 재가입할 수 있으나 이미지 생성 기본 횟수는 지급되지 않습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

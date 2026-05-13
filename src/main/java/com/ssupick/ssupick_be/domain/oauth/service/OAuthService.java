@@ -48,7 +48,7 @@ public class OAuthService {
             String kakaoId, String email, String name, String profileUrl, DeviceType deviceType
     ) {
         String randomNickname = randomNicknameGenerator.generate();
-        User user = userService.findOrRegisterKakaoUser(kakaoId, email, name, profileUrl, deviceType,randomNickname);
+        User user = userService.findOrRegisterKakaoUser(kakaoId, email, name, profileUrl, deviceType, randomNickname);
         boolean firstLogin = user.isFirstLogin();
         TokenIssuance tokens = jwtService.issueTokens(user);
         boolean aiImageGenerated = aiImageRepository.existsByUserAndSelectedTrue(user);
