@@ -8,6 +8,7 @@ import com.google.genai.types.*;
 import com.ssupick.ssupick_be.common.exception.GeneralException;
 import com.ssupick.ssupick_be.common.status.ErrorStatus;
 import com.ssupick.ssupick_be.domain.aiimage.properties.GeminiProperties;
+import com.ssupick.ssupick_be.domain.aiimage.properties.XaiProperties;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,8 @@ import java.util.Objects;
 public class GeminiImageClient {
 
     private final GeminiProperties geminiProperties;
+    private final XaiProperties xaiProperties;
+    private final GrokImageClient grokImageClient;
     private Client client;
 
     @PostConstruct
@@ -68,6 +71,15 @@ public class GeminiImageClient {
                 lastException = e;
                 log.warn("[Gemini] 모델 호출 실패, 다음 모델을 시도합니다 - model: {}", fallbackModel, e);
             }
+        }
+
+        if (grokImageClient.isEnabled()) {
+            log.warn("[Gemini] 모든 Gemini 모델 실패, Grok 이미지 편집으로 폴백합니다.");
+            return grokImageClient.editImage(
+                    originalImageBytes,
+                    mimeType,
+                    xaiProperties.resolvedPrompt(geminiProperties.prompt())
+            );
         }
 
         throw new GeneralException(ErrorStatus.AI_IMAGE_GENERATION_FAILED, lastException);

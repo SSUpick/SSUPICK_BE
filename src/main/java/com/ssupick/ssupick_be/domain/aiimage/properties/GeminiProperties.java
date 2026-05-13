@@ -13,8 +13,7 @@ public record GeminiProperties(
 ) {
     private static final List<String> DEFAULT_MODELS = List.of(
         "gemini-3.1-flash-image-preview",
-        "gemini-3-pro-image-preview",
-        "gemini-2.5-flash-image"
+        "gemini-3-pro-image-preview"
     );
 
     public List<String> resolvedModels() {
