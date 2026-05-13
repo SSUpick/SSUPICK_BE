@@ -63,9 +63,6 @@ dependencies {
     // Profanity filter
     implementation 'io.github.vaneproject:badwordfiltering:1.0.0'
 
-    // Google GenAI SDK (Gemini)
-    implementation 'com.google.genai:google-genai:1.5.0'
-
     // HTTP client test
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 }

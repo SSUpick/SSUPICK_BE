@@ -25,7 +25,7 @@ public class AiImageService {
 
     private final UserRepository userRepository;
     private final AiImageRepository aiImageRepository;
-    private final GeminiAsyncProcessor geminiAsyncProcessor;
+    private final GrokAsyncProcessor grokAsyncProcessor;
     private final S3Uploader s3Uploader;
 
     /**
@@ -33,7 +33,7 @@ public class AiImageService {
      * 1. 유저 조회 + 잔여 횟수 확인
      * 2. 원본 이미지 S3 업로드
      * 3. AiImage 엔티티 PENDING 상태로 저장 후 즉시 응답 반환
-     * 4. 백그라운드에서 Gemini 호출 + 결과 저장 (별도 트랜잭션)
+     * 4. 백그라운드에서 Grok 호출 + 결과 저장 (별도 트랜잭션)
      */
     @Transactional
     public AiImageResponse generateImage(Long userId, MultipartFile originalImageFile) {
@@ -57,17 +57,17 @@ public class AiImageService {
                 .build();
         aiImageRepository.save(aiImage);
 
-        // 횟수 선차감 — 백그라운드 실패 시 복구 로직은 processGeminiAsync에서 처리
+        // 횟수 선차감 — 백그라운드 실패 시 복구 로직은 GrokAsyncProcessor에서 처리
         user.decreaseGenerationCount();
 
-        // 4. 백그라운드에서 Gemini 호출 — 별도 빈(GeminiAsyncProcessor)으로 위임
+        // 4. 백그라운드에서 Grok 호출 — 별도 빈(GrokAsyncProcessor)으로 위임
         // self-invocation 방지: 같은 클래스 내 @Async 호출은 프록시를 거치지 않아 동작 안 함
         byte[] imageBytes = readFileBytes(originalImageFile);
         String mimeType = originalImageFile.getContentType() != null
                 ? originalImageFile.getContentType() : "image/jpeg";
         String extension = extractExtension(originalImageFile.getOriginalFilename());
 
-        geminiAsyncProcessor.process(aiImage.getId(), userId, imageBytes, mimeType, extension);
+        grokAsyncProcessor.process(aiImage.getId(), userId, imageBytes, mimeType, extension);
 
         // 5. PENDING 상태로 즉시 응답 반환
         String originalPresignedUrl = s3Uploader.generatePresignedUrl(originalKey);

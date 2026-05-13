@@ -35,7 +35,7 @@ public interface AiImageControllerDocs {
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "이미지 생성 횟수 초과",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "502", description = "Gemini API 호출 실패",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "502", description = "Grok API 호출 실패",
                     content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     ResponseEntity<ApiResponse<AiImageResponse>> generateImage(

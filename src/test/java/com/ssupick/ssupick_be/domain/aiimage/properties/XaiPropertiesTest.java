@@ -12,15 +12,15 @@ class XaiPropertiesTest {
                 "api-key", null, null, "grok prompt"
         );
 
-        assertThat(properties.resolvedPrompt("gemini prompt")).isEqualTo("grok prompt");
+        assertThat(properties.resolvedPrompt()).isEqualTo("grok prompt");
     }
 
     @Test
-    void resolvedPrompt_returnsFallbackPromptWhenXaiPromptIsBlank() {
+    void resolvedPrompt_returnsDefaultPromptWhenXaiPromptIsBlank() {
         XaiProperties properties = new XaiProperties(
                 "api-key", null, null, " "
         );
 
-        assertThat(properties.resolvedPrompt("gemini prompt")).isEqualTo("gemini prompt");
+        assertThat(properties.resolvedPrompt()).isNotBlank();
     }
 }

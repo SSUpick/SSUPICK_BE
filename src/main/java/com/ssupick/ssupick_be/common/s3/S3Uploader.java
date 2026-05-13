@@ -60,7 +60,7 @@ public class S3Uploader {
 
     /**
      * byte[] 이미지 데이터 → S3 업로드 후 S3 key 반환
-     * Gemini 응답 이미지(byte[]) 저장 시 사용
+     * AI 이미지 생성 응답(byte[]) 저장 시 사용
      */
     public String uploadBytes(byte[] imageBytes, String folder, String extension) {
         String key = generateKey(folder, extension);

@@ -26,7 +26,7 @@ public class AiImage extends BaseEntity {
     @Column(name = "original_image_url", length = 500, nullable = false)
     private String originalImageUrl;
 
-    // Gemini가 생성한 동물의 숲 스타일 이미지 S3 key (PENDING 상태에서는 null)
+    // AI가 생성한 프로필 이미지 S3 key (PENDING 상태에서는 null)
     @Column(name = "generated_image_url", length = 500)
     private String generatedImageUrl;
 

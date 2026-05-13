@@ -1,6 +1,5 @@
 package com.ssupick.ssupick_be;
 
-import com.ssupick.ssupick_be.domain.aiimage.properties.GeminiProperties;
 import com.ssupick.ssupick_be.domain.aiimage.properties.XaiProperties;
 import com.ssupick.ssupick_be.domain.admin.properties.AdminProperties;
 import com.ssupick.ssupick_be.domain.bank.properties.BankWebhookProperties;
@@ -17,7 +16,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @EnableConfigurationProperties({
         KakaoProperties.class,
         PortOneProperties.class,
-        GeminiProperties.class,
         XaiProperties.class,
         AdminProperties.class,
         BankWebhookProperties.class,

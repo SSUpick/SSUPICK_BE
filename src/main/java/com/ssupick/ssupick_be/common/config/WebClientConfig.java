@@ -30,9 +30,9 @@ public class WebClientConfig {
     }
 
     /**
-     * Gemini API 전용 WebClient
+     * AI 이미지 생성 API 전용 WebClient
      * - 이미지 생성 모델 특성상 응답이 느림 → 타임아웃 120초로 설정
-     * - baseUrl 없이 생성 (GeminiImageClient에서 전체 URL 직접 사용)
+     * - baseUrl 없이 생성 (클라이언트에서 전체 URL 직접 사용)
      */
     @Bean
     public WebClient webClient() {
