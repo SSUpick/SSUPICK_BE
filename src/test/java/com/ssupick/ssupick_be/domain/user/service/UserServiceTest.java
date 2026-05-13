@@ -11,7 +11,6 @@ import com.ssupick.ssupick_be.domain.user.dto.request.RegisterUserOnboardingRequ
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdatePhoneNumberRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.entity.User;
-import com.ssupick.ssupick_be.domain.user.entity.WithdrawUser;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.Gender;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
@@ -22,7 +21,6 @@ import com.ssupick.ssupick_be.domain.user.repository.WithdrawUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -73,7 +71,6 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().when(withdrawUserRepository.save(any(WithdrawUser.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     // 온보딩 시 닉네임에 비속어가 있으면 예외를 던지고 온보딩 상태가 변경되지 않습니다.
@@ -282,10 +279,7 @@ class UserServiceTest {
 
         userService.withdraw(1L);
 
-        ArgumentCaptor<WithdrawUser> captor = ArgumentCaptor.forClass(WithdrawUser.class);
-        verify(withdrawUserRepository).save(captor.capture());
-        assertThat(captor.getValue().getOauthId()).isEqualTo("12345");
-        assertThat(captor.getValue().getOauthProvider()).isEqualTo(OAuthProvider.KAKAO);
+        verify(withdrawUserRepository).upsertWithdrawUser("12345", "KAKAO");
         verify(userRepository).delete(user);
     }
 }

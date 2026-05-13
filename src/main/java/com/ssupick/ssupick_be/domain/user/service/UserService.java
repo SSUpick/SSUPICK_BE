@@ -13,7 +13,6 @@ import com.ssupick.ssupick_be.domain.user.dto.request.UpdateUserProfileRequest;
 import com.ssupick.ssupick_be.domain.user.dto.request.ValidateNicknameRequest;
 import com.ssupick.ssupick_be.domain.user.dto.response.*;
 import com.ssupick.ssupick_be.domain.user.entity.User;
-import com.ssupick.ssupick_be.domain.user.entity.WithdrawUser;
 import com.ssupick.ssupick_be.domain.user.enums.DeviceType;
 import com.ssupick.ssupick_be.domain.user.enums.OAuthProvider;
 import com.ssupick.ssupick_be.domain.user.enums.OnboardingStatus;
@@ -216,7 +215,10 @@ public class UserService {
     }
 
     private void saveWithdrawUser(User user) {
-        withdrawUserRepository.save(WithdrawUser.from(user));
+        withdrawUserRepository.upsertWithdrawUser(
+                user.getOauthId(),
+                user.getOauthProvider().name()
+        );
     }
 
     // 유저 관련 열람 기록 삭제
