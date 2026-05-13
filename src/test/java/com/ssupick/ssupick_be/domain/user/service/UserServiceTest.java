@@ -226,30 +226,32 @@ class UserServiceTest {
         verify(userRepository, never()).decreaseCouponCount(1L);
     }
 
-    // 유저 카드 리스트는 온보딩 완료 여부와 무관하게 전체 유저를 반환하고, 로그인한 유저만 본인을 제외합니다.
+    // 비로그인 카드 리스트는 온보딩 완료 유저만 반환합니다.
     @Test
-    void getUserCardList_returnsAllUsersWithoutOnboardingFilter() {
+    void getUserCardList_returnsOnlyCompletedUsersWhenAnonymous() {
         User first = User.createTestUser("first", DeviceType.IOS);
         User second = User.createTestUser("second", DeviceType.IOS);
 
-        when(userRepository.findAllByOrderByUpdatedAtDesc()).thenReturn(List.of(first, second));
+        when(userRepository.findAllByOnboardingStatusOrderByUpdatedAtDesc(OnboardingStatus.COMPLETED))
+                .thenReturn(List.of(first, second));
 
         userService.getUserCardList(null);
 
-        verify(userRepository).findAllByOrderByUpdatedAtDesc();
+        verify(userRepository).findAllByOnboardingStatusOrderByUpdatedAtDesc(OnboardingStatus.COMPLETED);
     }
 
-    // 로그인한 유저가 있으면 본인만 제외하고 전체 유저를 반환합니다.
+    // 로그인한 카드 리스트는 온보딩 완료 유저만 반환하고 본인만 제외합니다.
     @Test
-    void getUserCardList_excludesOnlySelfWhenAuthenticated() {
+    void getUserCardList_excludesOnlySelfAmongCompletedUsersWhenAuthenticated() {
         User first = User.createTestUser("first", DeviceType.IOS);
         User second = User.createTestUser("second", DeviceType.IOS);
 
-        when(userRepository.findAllByIdNotOrderByUpdatedAtDesc(1L)).thenReturn(List.of(second));
+        when(userRepository.findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(OnboardingStatus.COMPLETED, 1L))
+                .thenReturn(List.of(second));
 
         userService.getUserCardList(1L);
 
-        verify(userRepository).findAllByIdNotOrderByUpdatedAtDesc(1L);
+        verify(userRepository).findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(OnboardingStatus.COMPLETED, 1L);
     }
 
     // 탈퇴 이력이 없는 카카오 신규 유저는 기본 이미지 생성 횟수 3회로 생성됩니다.

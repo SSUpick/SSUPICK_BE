@@ -50,7 +50,7 @@ public interface UserControllerDocs {
     @Operation(
             summary = "유저 카드 리스트 조회",
             description = """
-                    유저 목록을 카드 형태로 조회합니다.
+                    온보딩을 완료한 유저 목록을 카드 형태로 조회합니다.
                     
                     - 인증된 요청: 본인을 제외한 목록을 반환합니다.
                     - 비인증 요청: 전체 목록을 반환합니다. (토큰 없이 호출 가능)

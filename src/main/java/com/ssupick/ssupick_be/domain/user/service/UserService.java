@@ -133,17 +133,20 @@ public class UserService {
         return ValidateNicknameResponse.ofAvailable();
     }
 
-    // 유저 카드 리스트 조회 — 비인증 요청이면 전체 반환, 인증 요청이면 본인 제외
+    // 유저 카드 리스트 조회 — 온보딩 완료 유저만 반환, 인증 요청이면 본인 제외
     @Transactional(readOnly = true)
     public List<GetUserCardResponse> getUserCardList(Long userId) {
         if (userId == null) {
-            return userRepository.findAllByOrderByUpdatedAtDesc()
+            return userRepository.findAllByOnboardingStatusOrderByUpdatedAtDesc(OnboardingStatus.COMPLETED)
                     .stream()
                     .map(GetUserCardResponse::from)
                     .toList();
         }
 
-        return userRepository.findAllByIdNotOrderByUpdatedAtDesc(userId)
+        return userRepository.findAllByOnboardingStatusAndIdNotOrderByUpdatedAtDesc(
+                        OnboardingStatus.COMPLETED,
+                        userId
+                )
                 .stream()
                 .map(GetUserCardResponse::from)
                 .toList();
